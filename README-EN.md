@@ -90,7 +90,7 @@ flowchart TD
 │   ├── 02-enterprise-gke-rag/    # Enterprise Landing Zone: GKE Autopilot + Bastion + RAG + SRE
 │   ├── 03-sample-app-manifests/  # Kubernetes manifest templates (ServiceAccount, WAF, Ingress)
 │   ├── 04-rag-comparison-chatbot/# Presales Demo: Go RAG Chatbot + split-screen comparison UI
-│   └── 💡 Reference App          # [CivicLens](https://github.com/cloud-gtm/civiclens) : Full Open Data & RAG Platform
+│   └── 💡 Dedicated App Repo     # [app-civiclens](https://github.com/cloud-gtm/app-civiclens) : Code & Automated Deployment
 │
 ├── scripts/
 │   ├── bootstrap.sh              # GCP API enablement and Terraform state bucket creation
@@ -100,8 +100,8 @@ flowchart TD
     └── terraform-lint.yml        # CI/CD: syntax check, formatting, and validation
 ```
 
-> 💡 **Flagship Reference Implementation — [CivicLens](https://github.com/cloud-gtm/civiclens):**
-> If you are looking for a complete end-to-end business application deployed on top of this foundation (multimodal ingestion pipeline, Cloud SQL PostgreSQL with `pgvector`, Gemini synthesis on Vertex AI, IAP Ingress, and Backup DR), visit our companion asset **[CivicLens](https://github.com/cloud-gtm/civiclens)**.
+> 💡 **Reference Application Implementation — [app-civiclens](https://github.com/cloud-gtm/app-civiclens):**
+> If you are looking for a complete, decoupled business application ready to deploy with a single command on top of this blueprint (FastAPI, Cloud SQL `pgvector`, Gemini 2.5 Flash on Vertex AI, IAP Ingress), explore the dedicated application repository **[app-civiclens](https://github.com/cloud-gtm/app-civiclens)**.
 
 ---
 
