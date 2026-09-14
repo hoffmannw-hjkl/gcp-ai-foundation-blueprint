@@ -60,18 +60,23 @@ Ce blueprint applique **Workload Identity** :
 
 ---
 
-## 4. Recommandations FinOps pour Démos & POCs
-
-Pour maintenir les coûts d'infrastructure au minimum lors des démonstrations :
-1. **Choisir Cloud Run pour les POCs rapides** : L'option `enable_cloudrun = true` et `enable_gke = false` permet un dimensionnement à zéro (`min_instances = 0`), ne générant aucun coût hors sollicitation.
-2. **Cluster GKE Autopilot** : Lorsque GKE est requis (architectures microservices, agents multiples, orchestrateurs complexes), le mode Autopilot facture uniquement les ressources CPU/RAM réellement réservées par les Pods.
-3. **Durée de vie des tables BigQuery** : Le paramètre `default_table_expiration_ms` peut être configuré à 7 jours ou 14 jours pour purger automatiquement les tables de test.
-4. **Cycle de vie Cloud Storage** : Les artefacts IA et caches de modèles migrent automatiquement vers la classe **Nearline** après 30 jours.
+## 4. Recommandations FinOps & Contrôle Budgétaire
+ 
+Pour maintenir les coûts d'infrastructure sous contrôle strict lors des démonstrations :
+1. **Module d'Alerte Budgétaire Cloud Billing (`modules/finops-budget`)** :
+   - Surveille le compte de facturation et le projet en continu via `billingbudgets.googleapis.com`.
+   - Alertes graduelles par seuils : 50%, 75%, 90% et 100% de la consommation réelle, plus 100% de la consommation prévisionnelle (*forecasted spend*).
+   - Canal de notification Cloud Monitoring immédiat par email pour éviter toute dérive de coûts imprévue.
+2. **Choisir Cloud Run pour les POCs rapides** : L'option `enable_cloudrun = true` et `enable_gke = false` permet un dimensionnement à zéro (`min_instances = 0`), ne générant aucun coût hors sollicitation.
+3. **Cluster GKE Autopilot** : Lorsque GKE est requis (architectures microservices, agents multiples, orchestrateurs complexes), le mode Autopilot facture uniquement les ressources CPU/RAM réellement réservées par les Pods.
+4. **Durée de vie des tables BigQuery** : Le paramètre `default_table_expiration_ms` peut être configuré à 7 jours ou 14 jours pour purger automatiquement les tables de test.
+5. **Cycle de vie Cloud Storage** : Les artefacts IA et caches de modèles migrent automatiquement vers la classe **Nearline** après 30 jours.
 
 ---
 
-## 5. Gestion du Quota Project pour l'ADC (`user_project_override`)
+## 5. Gestion de l'Authentification & Quota Project (`user_project_override`)
 
+### Quota Project pour l'ADC
 Lorsqu'un ingénieur déploie depuis son poste de travail ou un Cloudtop en utilisant l'authentification applicative par défaut (`gcloud auth application-default login`), les jetons OAuth émis n'ont pas de quota project implicitement associé pour les APIs de facturation et de télémétrie.
 
 Sans configuration explicite, les requêtes Terraform déclenchent l'erreur bloquante :
@@ -79,7 +84,7 @@ Sans configuration explicite, les requêtes Terraform déclenchent l'erreur bloq
 Error 403: Google Cloud Resource Manager API has not been used in project ... before or it is disabled.
 ```
 
-Le blueprint résout cette contrainte en activant le surcharge du projet de quota dans le provider Google :
+Le blueprint résout cette contrainte en activant la surcharge du projet de quota dans le provider Google :
 ```hcl
 provider "google" {
   project               = var.project_id
@@ -89,6 +94,15 @@ provider "google" {
 }
 ```
 Terraform injecte ainsi systématiquement le header HTTP `X-Goog-User-Project: <project_id>` lors de chaque appel d'API.
+
+### Environnements Argolis Multi-Comptes
+Dans les organisations Argolis appliquant la contrainte organisationnelle `constraints/iam.allowedPolicyMemberDomains`, l'attribution de rôles IAM à des comptes externes (tels que `@google.com`) est strictement bloquée par l'API Cloud Resource Manager (`FAILED_PRECONDITION: One or more users named in the policy do not belong to a permitted customer`).
+
+Lorsque l'ADC de votre machine est positionné sur un compte externe, il convient de transmettre directement le jeton d'accès du compte Argolis à Terraform :
+```bash
+export GOOGLE_OAUTH_ACCESS_TOKEN=$(gcloud auth print-access-token --account=user@votre-domaine.altostrat.com)
+terraform apply
+```
 
 ---
 

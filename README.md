@@ -76,6 +76,7 @@ flowchart TD
 │   ├── compute-cloudrun/         # Cloud Run v2, Connecteur Serverless VPC, SA dédié
 │   ├── bastion/                  # VM Bastion Debian 12 privée, IAP, OS Login, kubectl
 │   ├── data-ai-foundation/       # Vertex AI, BigQuery Lakehouse, Buckets GCS RAG & Artifacts
+│   ├── finops-budget/            # Alerte budgétaire Cloud Billing (FinOps, seuils 50/75/90/100%)
 │   └── observability/            # Logging Sink vers BigQuery (résilience schéma), Dashboard
 │
 ├── examples/
@@ -170,6 +171,11 @@ terraform apply
 - **Politique d'Alerte** : Notification en cas d'augmentation anormale du taux d'erreurs HTTP 5xx.
 - **Cockpit Unifié** : Tableau de bord Cloud Monitoring visualisant en temps réel le CPU/RAM GKE, le volume d'appels Cloud Run, les requêtes bloquées par le WAF et le stockage GCS.
 
+### 8. FinOps Budget Alert (`modules/finops-budget`)
+- **Plafond Mensuel Paramétrable** : Montant cible défini par `budget_amount` (ex: 100 USD / EUR).
+- **Seuils Graduels Automatisés** : Déclenchement d'alertes à 50%, 75%, 90% et 100% de la consommation réelle, ainsi qu'à 100% de la prévision de dépenses (*forecasted spend*).
+- **Canal de Notification** : Envoi direct des alertes par email au responsable du projet.
+
 ---
 
 ## 🔒 Conformité Argolis & Bonnes Pratiques
@@ -178,6 +184,11 @@ Ce blueprint respecte scrupuleusement les contraintes de l'environnement Google 
 - **Contrainte `compute.vmExternalIpAccess`** : Aucune VM ou nœud Kubernetes ne tente d'allouer d'adresse IP externe.
 - **Administration IAP** : L'accès d'administration s'effectue exclusivement via `roles/iap.tunnelResourceAccessor` et le port 22/8888.
 - **Moindre Privilège** : Aucun compte de service n'utilise les rôles permissifs `roles/editor` ou `roles/owner`. Chaque composant dispose uniquement des rôles nécessaires à sa mission.
+- **Authentification Développeur / Argolis** : Dans un environnement Cloudtop ou multi-comptes où l'ADC local (`gcloud auth application-default`) pointe vers un compte `@google.com` bloqué par la contrainte `constraints/iam.allowedPolicyMemberDomains`, injecter le token d'accès du compte Argolis :
+  ```bash
+  export GOOGLE_OAUTH_ACCESS_TOKEN=$(gcloud auth print-access-token --account=user@votre-domaine.altostrat.com)
+  terraform apply
+  ```
 
 ---
 
