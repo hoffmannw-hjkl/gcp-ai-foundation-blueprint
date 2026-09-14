@@ -7,9 +7,14 @@ metadata:
     kubernetes.io/ingress.class: "gce"
     # Remplacez par le nom de l'adresse IP globale externe créée par Terraform
     kubernetes.io/ingress.global-static-ip-name: "ai-demo-xxxx-global-ip"
+    # Attachement du certificat SSL géré automatiquement par Google Cloud
+    networking.gke.io/managed-certificates: "sample-ai-managed-cert"
+    # Activer HTTP le temps de la propagation DNS et validation du certificat TLS
+    kubernetes.io/ingress.allow-http: "true"
 spec:
   rules:
-  - http:
+  - host: "sample-ai.votre-domaine.demo.altostrat.com"
+    http:
       paths:
       - path: /*
         pathType: ImplementationSpecific

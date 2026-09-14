@@ -10,7 +10,8 @@ Ce répertoire contient un ensemble complet de manifests Kubernetes prêts à l'
 2. **`02-backend-config.yaml`** : Configure le `BackendConfig` GKE pour lier la politique **Cloud Armor WAF** (OWASP Top 10 et Rate Limiting) au service.
 3. **`03-deployment.yaml`** : Déploie les pods avec les variables d'environnement pointant vers Vertex AI, BigQuery Lakehouse et les buckets RAG.
 4. **`04-service.yaml`** : Expose le déploiement en ClusterIP avec NEG natif (`cloud.google.com/neg: '{"ingress": true}'`).
-5. **`05-ingress.yaml`** : Crée le Google Cloud HTTP(S) Load Balancer avec l'IP statique globale réservée par Terraform.
+5. **`05-managed-cert.yaml`** : Demande un certificat SSL/TLS gratuit géré et renouvelé automatiquement par Google Cloud (`ManagedCertificate`).
+6. **`05-ingress.yaml`** : Crée le Google Cloud HTTP(S) Load Balancer avec l'IP statique globale réservée par Terraform et le certificat SSL.
 
 ---
 
