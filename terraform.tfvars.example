@@ -13,6 +13,10 @@ zone   = "europe-west1-b"
 # Préfixe pour nommer harmonieusement toutes les ressources
 resource_prefix = "ai-demo"
 
+# Suffixe aléatoire anti-collision (recommandé: true pour éviter les collisions GCS)
+enable_random_suffix = true
+random_suffix_length = 4
+
 # Options d'architecture Compute
 enable_gke      = true   # Activer le cluster GKE Autopilot privé
 enable_cloudrun = false  # Activer le service Cloud Run Serverless (alternative rapide)
@@ -31,5 +35,5 @@ alert_email          = "sre-alerts@example.com"
 labels = {
   environment = "demo"
   managed_by  = "terraform"
-  program     = "elevate-spark"
+  framework   = "elevate-spark"
 }

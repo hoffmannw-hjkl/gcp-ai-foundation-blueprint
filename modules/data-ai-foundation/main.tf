@@ -46,8 +46,9 @@ resource "google_bigquery_dataset" "ai_dataset" {
 # Cloud Storage: RAG Document Store
 # ------------------------------------------------------------------------------
 locals {
-  effective_rag_bucket       = var.rag_bucket_name != "" ? var.rag_bucket_name : "${var.project_id}-rag-docs"
-  effective_artifacts_bucket = var.artifacts_bucket_name != "" ? var.artifacts_bucket_name : "${var.project_id}-ai-artifacts"
+  suffix_part                = var.random_suffix != "" ? "-${var.random_suffix}" : ""
+  effective_rag_bucket       = var.rag_bucket_name != "" ? var.rag_bucket_name : "${var.project_id}-rag-docs${local.suffix_part}"
+  effective_artifacts_bucket = var.artifacts_bucket_name != "" ? var.artifacts_bucket_name : "${var.project_id}-ai-artifacts${local.suffix_part}"
 }
 
 resource "google_storage_bucket" "rag_documents" {

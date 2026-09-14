@@ -67,3 +67,43 @@ Pour maintenir les coûts d'infrastructure au minimum lors des démonstrations :
 2. **Cluster GKE Autopilot** : Lorsque GKE est requis (architectures microservices, agents multiples, orchestrateurs complexes), le mode Autopilot facture uniquement les ressources CPU/RAM réellement réservées par les Pods.
 3. **Durée de vie des tables BigQuery** : Le paramètre `default_table_expiration_ms` peut être configuré à 7 jours ou 14 jours pour purger automatiquement les tables de test.
 4. **Cycle de vie Cloud Storage** : Les artefacts IA et caches de modèles migrent automatiquement vers la classe **Nearline** après 30 jours.
+
+---
+
+## 5. Gestion du Quota Project pour l'ADC (`user_project_override`)
+
+Lorsqu'un ingénieur déploie depuis son poste de travail ou un Cloudtop en utilisant l'authentification applicative par défaut (`gcloud auth application-default login`), les jetons OAuth émis n'ont pas de quota project implicitement associé pour les APIs de facturation et de télémétrie.
+
+Sans configuration explicite, les requêtes Terraform déclenchent l'erreur bloquante :
+```text
+Error 403: Google Cloud Resource Manager API has not been used in project ... before or it is disabled.
+```
+
+Le blueprint résout cette contrainte en activant le surcharge du projet de quota dans le provider Google :
+```hcl
+provider "google" {
+  project               = var.project_id
+  region                = var.region
+  user_project_override = true
+  billing_project       = var.project_id
+}
+```
+Terraform injecte ainsi systématiquement le header HTTP `X-Goog-User-Project: <project_id>` lors de chaque appel d'API.
+
+---
+
+## 6. Convention de Nommage Anti-Collision (`random_string` / FAST pattern)
+
+Les buckets Google Cloud Storage partagent un espace de nommage global unique à l'échelle mondiale. Pour éviter les conflits `409 Bucket name already exists` lors de déploiements concurrents ou répétés :
+
+1. Une ressource `random_string.suffix` est instanciée (4 caractères alphanumériques minuscules).
+2. Un préfixe unifié est calculé :
+   ```hcl
+   locals {
+     name_prefix = var.enable_random_suffix ? "${var.resource_prefix}-${random_string.suffix[0].result}" : var.resource_prefix
+   }
+   ```
+3. Ce préfixe est propagé à toutes les ressources (`${local.name_prefix}-vpc`, `${local.name_prefix}-gke`, `${var.project_id}-${local.name_prefix}-rag-docs`), garantissant :
+   - L'unicité absolue des noms de buckets.
+   - La cohérence visuelle dans la console GCP.
+   - La stabilité dans le fichier d'état (`.tfstate`).

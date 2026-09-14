@@ -51,6 +51,12 @@ variable "artifacts_bucket_name" {
   default     = ""
 }
 
+variable "random_suffix" {
+  description = "Optional random suffix to append to default bucket names for collision prevention."
+  type        = string
+  default     = ""
+}
+
 variable "cors_allowed_origins" {
   description = "List of allowed origins for Cloud Storage CORS (e.g. web upload frontends)."
   type        = list(string)

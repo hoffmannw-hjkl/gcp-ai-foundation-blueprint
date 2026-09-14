@@ -16,9 +16,21 @@ variable "zone" {
 }
 
 variable "resource_prefix" {
-  description = "Prefix applied to all created resource names to ensure uniqueness."
+  description = "Base prefix applied to all created resource names."
   type        = string
   default     = "ai-base"
+}
+
+variable "enable_random_suffix" {
+  description = "Append a collision-resistant random alphanumeric suffix to all resource names and GCS buckets."
+  type        = bool
+  default     = true
+}
+
+variable "random_suffix_length" {
+  description = "Length of the random suffix (e.g. 4 for 'a8f2')."
+  type        = number
+  default     = 4
 }
 
 variable "enable_gke" {

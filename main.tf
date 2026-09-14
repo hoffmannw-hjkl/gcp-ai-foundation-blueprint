@@ -3,14 +3,29 @@
 # Standards: Argolis, Google Cloud Well-Architected, Elevate & Spark
 # ==============================================================================
 
+# ------------------------------------------------------------------------------
+# Collision-Resistant Random Suffix (Cloud Foundation Fabric / FAST pattern)
+# ------------------------------------------------------------------------------
+resource "random_string" "suffix" {
+  count   = var.enable_random_suffix ? 1 : 0
+  length  = var.random_suffix_length
+  special = false
+  upper   = false
+  numeric = true
+}
+
+locals {
+  name_prefix = var.enable_random_suffix ? "${var.resource_prefix}-${random_string.suffix[0].result}" : var.resource_prefix
+}
+
 # 1. Foundation Networking (VPC, Subnet, Secondary Ranges, Cloud NAT, PSA)
 module "networking" {
   source = "./modules/networking"
 
   project_id                    = var.project_id
   region                        = var.region
-  network_name                  = "${var.resource_prefix}-vpc"
-  subnet_name                   = "${var.resource_prefix}-subnet"
+  network_name                  = "${local.name_prefix}-vpc"
+  subnet_name                   = "${local.name_prefix}-subnet"
   subnet_cidr                   = "10.10.0.0/20"
   pods_cidr_name                = "gke-pods"
   pods_cidr                     = "10.20.0.0/16"
@@ -26,14 +41,14 @@ module "security_waf" {
   source = "./modules/security-waf"
 
   project_id                 = var.project_id
-  policy_name                = "${var.resource_prefix}-waf-policy"
+  policy_name                = "${local.name_prefix}-waf-policy"
   enable_adaptive_protection = true
   enable_owasp_rules         = true
   enable_rate_limiting       = true
   create_external_ip         = true
-  ip_name                    = "${var.resource_prefix}-global-ip"
+  ip_name                    = "${local.name_prefix}-global-ip"
   domain_name                = var.domain_name
-  ssl_cert_name              = "${var.resource_prefix}-ssl-cert"
+  ssl_cert_name              = "${local.name_prefix}-ssl-cert"
   admin_email                = var.admin_email
 }
 
@@ -43,10 +58,10 @@ module "data_ai" {
 
   project_id            = var.project_id
   region                = var.region
-  dataset_id            = "${replace(var.resource_prefix, "-", "_")}_lakehouse"
-  dataset_friendly_name = "AI Lakehouse (${var.resource_prefix})"
-  rag_bucket_name       = "${var.project_id}-${var.resource_prefix}-rag-docs"
-  artifacts_bucket_name = "${var.project_id}-${var.resource_prefix}-artifacts"
+  dataset_id            = "${replace(local.name_prefix, "-", "_")}_lakehouse"
+  dataset_friendly_name = "AI Lakehouse (${local.name_prefix})"
+  rag_bucket_name       = "${var.project_id}-${local.name_prefix}-rag-docs"
+  artifacts_bucket_name = "${var.project_id}-${local.name_prefix}-artifacts"
   labels                = var.labels
 }
 
@@ -57,7 +72,7 @@ module "gke" {
 
   project_id                    = var.project_id
   region                        = var.region
-  cluster_name                  = "${var.resource_prefix}-gke"
+  cluster_name                  = "${local.name_prefix}-gke"
   network_id                    = module.networking.network_id
   subnet_id                     = module.networking.subnet_id
   pods_secondary_range_name     = module.networking.pods_secondary_range_name
@@ -73,7 +88,7 @@ module "cloudrun" {
 
   project_id           = var.project_id
   region               = var.region
-  service_name         = "${var.resource_prefix}-service"
+  service_name         = "${local.name_prefix}-service"
   enable_vpc_connector = true
   vpc_network_name     = module.networking.network_name
   vpc_connector_cidr   = "10.8.0.0/28"
@@ -89,7 +104,7 @@ module "bastion" {
 
   project_id       = var.project_id
   zone             = var.zone
-  bastion_name     = "${var.resource_prefix}-bastion"
+  bastion_name     = "${local.name_prefix}-bastion"
   subnet_id        = module.networking.subnet_id
   machine_type     = "e2-small"
   enable_tinyproxy = true
@@ -102,10 +117,10 @@ module "observability" {
 
   project_id             = var.project_id
   region                 = var.region
-  sink_name              = "${var.resource_prefix}-log-sink"
+  sink_name              = "${local.name_prefix}-log-sink"
   create_log_dataset     = true
-  log_dataset_name       = "${replace(var.resource_prefix, "-", "_")}_logs"
+  log_dataset_name       = "${replace(local.name_prefix, "-", "_")}_logs"
   alert_email_address    = var.alert_email
   enable_dashboard       = true
-  dashboard_display_name = "🤖 AI Foundation (${var.resource_prefix}) - Cockpit Observabilité"
+  dashboard_display_name = "🤖 AI Foundation (${local.name_prefix}) - Cockpit Observabilité"
 }
