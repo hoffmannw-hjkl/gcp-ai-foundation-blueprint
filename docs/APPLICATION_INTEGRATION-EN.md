@@ -2,6 +2,9 @@
 
 This guide provides a step-by-step walkthrough on how to deploy and run **your own Artificial Intelligence applications** (FastAPI backend, GenAI agent, RAG pipeline, Streamlit UI, vLLM inference worker) on top of the infrastructure provisioned by this blueprint.
 
+> 🌟 **Full Production Reference Implementation: [CivicLens](https://github.com/cloud-gtm/civiclens)**
+> To see this deployment pattern implemented in a large-scale real-world AI application combining GKE Autopilot, Cloud SQL PostgreSQL with `pgvector`, Gemini multimodality, and full IAP authentication, explore the companion repository **[CivicLens (cloud-gtm/civiclens)](https://github.com/cloud-gtm/civiclens)**.
+
 ---
 
 ## 🧭 Deployment Workflow Overview

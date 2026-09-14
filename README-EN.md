@@ -1,3 +1,8 @@
+> 🇫🇷 **[Version Française](README.md)** | 🇬🇧 **[English Version](README-EN.md)**
+>
+> 🔗 **EMEA SPARK Ecosystem & Project Synergy:**
+> This repository delivers the **Enterprise Infrastructure Foundation (IaC Landing Zone)**. To discover the complete end-to-end production AI application deployed on top of this foundation (GKE Autopilot, Cloud SQL pgvector, Gemini multimodality, and public finance observatory), explore **[CivicLens (cloud-gtm/civiclens)](https://github.com/cloud-gtm/civiclens)**.
+
 # GCP AI Foundation Blueprint 🏛️⚡
 
 > **Modular, secure, and reusable Terraform infrastructure baseline for all Artificial Intelligence demonstrations on Google Cloud (Elevate & Spark Programs).**
@@ -84,7 +89,8 @@ flowchart TD
 │   ├── 01-minimal-cloudrun-ai/   # Fast (<3 min) Serverless Cloud Run + WAF prototype
 │   ├── 02-enterprise-gke-rag/    # Enterprise Landing Zone: GKE Autopilot + Bastion + RAG + SRE
 │   ├── 03-sample-app-manifests/  # Kubernetes manifest templates (ServiceAccount, WAF, Ingress)
-│   └── 04-rag-comparison-chatbot/# Presales Demo: Go RAG Chatbot + split-screen comparison UI
+│   ├── 04-rag-comparison-chatbot/# Presales Demo: Go RAG Chatbot + split-screen comparison UI
+│   └── 💡 Reference App          # [CivicLens](https://github.com/cloud-gtm/civiclens) : Full Open Data & RAG Platform
 │
 ├── scripts/
 │   ├── bootstrap.sh              # GCP API enablement and Terraform state bucket creation
@@ -93,6 +99,9 @@ flowchart TD
 └── .github/workflows/
     └── terraform-lint.yml        # CI/CD: syntax check, formatting, and validation
 ```
+
+> 💡 **Flagship Reference Implementation — [CivicLens](https://github.com/cloud-gtm/civiclens):**
+> If you are looking for a complete end-to-end business application deployed on top of this foundation (multimodal ingestion pipeline, Cloud SQL PostgreSQL with `pgvector`, Gemini synthesis on Vertex AI, IAP Ingress, and Backup DR), visit our companion asset **[CivicLens](https://github.com/cloud-gtm/civiclens)**.
 
 ---
 
