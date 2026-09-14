@@ -4,6 +4,8 @@
 
 Ce projet met en pratique le [**Prompt de Développement**](PROMPT.md) et se déploie en 2 minutes sur le **GCP AI Foundation Blueprint** (GKE Autopilot ou Cloud Run).
 
+> 📦 **Dépôt d'Application Dédié** : Pour cloner et développer uniquement l'application sans l'infrastructure, consultez le dépôt autonome [**`app-rag-comparison`**](https://github.com/hoffmannw-hjkl/app-rag-comparison) (ou [`cloud-gtm/app-rag-comparison`](https://github.com/cloud-gtm/app-rag-comparison)).
+
 ---
 
 ## 🌟 Fonctionnalités Clés Démo
