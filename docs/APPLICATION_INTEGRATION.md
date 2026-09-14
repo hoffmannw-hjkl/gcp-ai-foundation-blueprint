@@ -176,9 +176,54 @@ spec:
 
 ---
 
-### Étape 2.5 : Exposer via l'External Ingress (HTTPS + IP Réservée)
+### Étape 2.5 : Enregistrement DNS & Certificat SSL Managé Google
 
-Créez `ingress.yaml` pour lier le Load Balancer externe Google Cloud à votre service :
+Pour exposer votre application via un nom de domaine propre (ex: `mon-app.hoffmannw.demo.altostrat.com`) avec terminaison TLS/HTTPS automatique :
+
+#### A. Création du Record DNS (Cloud DNS)
+Créez un enregistrement DNS de type `A` pointant vers l'IP statique globale externe (`external_ip`) générée par Terraform :
+
+```bash
+# Exemple via la CLI gcloud (dans votre projet hébergeant la zone DNS) :
+gcloud dns record-sets create "mon-app.votre-domaine.demo.altostrat.com." \
+  --zone="votre-zone-dns" \
+  --type="A" \
+  --ttl=60 \
+  --rrdatas="VOTRE_IP_STATIQUE_GLOBALE" \
+  --project="projet-dns"
+```
+
+*Note : Vous pouvez également déclarer cette ressource en Terraform (pattern CivicLens) :*
+```hcl
+resource "google_dns_record_set" "app_a_record" {
+  project      = "projet-dns"
+  managed_zone = "votre-zone"
+  name         = "mon-app.votre-domaine.demo.altostrat.com."
+  type         = "A"
+  ttl          = 60
+  rrdatas      = [module.security_waf[0].external_ip_address]
+}
+```
+
+#### B. Certificat SSL Managé (`ManagedCertificate`)
+Créez le manifest `managed-cert.yaml` pour demander un certificat TLS gratuit et renouvelé automatiquement par Google :
+
+```yaml
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: ai-app-managed-cert
+  namespace: default
+spec:
+  domains:
+    - "mon-app.votre-domaine.demo.altostrat.com"
+```
+
+---
+
+### Étape 2.6 : Exposer via l'External Ingress (HTTPS + IP Réservée + Certificat)
+
+Créez ou adaptez `ingress.yaml` pour lier le Load Balancer externe Google Cloud, l'adresse IP globale et le certificat SSL managé :
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -190,9 +235,14 @@ metadata:
     kubernetes.io/ingress.class: "gce"
     # Utiliser l'IP statique globale créée par le module security-waf
     kubernetes.io/ingress.global-static-ip-name: "ai-demo-xxxx-global-ip"
+    # Attacher le certificat SSL Google-managed
+    networking.gke.io/managed-certificates: "ai-app-managed-cert"
+    # Activer HTTP temporairement le temps du provisionnement DNS / TLS
+    kubernetes.io/ingress.allow-http: "true"
 spec:
   rules:
-  - http:
+  - host: "mon-app.votre-domaine.demo.altostrat.com"
+    http:
       paths:
       - path: /*
         pathType: ImplementationSpecific
@@ -205,7 +255,7 @@ spec:
 
 ---
 
-### Étape 2.6 : Appliquer les manifests via le Bastion IAP
+### Étape 2.7 : Appliquer les manifests via le Bastion IAP
 
 Puisque le cluster GKE Autopilot est **100% privé** (Argolis-Ready), déployez vos fichiers depuis le bastion sécurisé via le tunnel IAP :
 

@@ -1,0 +1,9 @@
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: sample-ai-managed-cert
+  namespace: default
+spec:
+  domains:
+    # Remplacez par votre FQDN pointant sur l'IP statique globale
+    - "sample-ai.votre-domaine.demo.altostrat.com"
