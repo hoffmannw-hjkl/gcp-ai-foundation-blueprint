@@ -90,3 +90,21 @@ variable "labels" {
     framework   = "elevate-spark"
   }
 }
+
+variable "billing_account" {
+  description = "Google Cloud Billing Account ID (e.g. 012345-678901-ABCDEF). If provided, an automated monthly budget alert is provisioned."
+  type        = string
+  default     = ""
+}
+
+variable "budget_amount" {
+  description = "Monthly budget limit for the project (e.g. 100 for $100 demo budget)."
+  type        = number
+  default     = 100
+}
+
+variable "budget_currency" {
+  description = "Currency code for the budget alert."
+  type        = string
+  default     = "USD"
+}

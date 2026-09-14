@@ -37,3 +37,8 @@ labels = {
   managed_by  = "terraform"
   framework   = "elevate-spark"
 }
+
+# FinOps & Facturation (Optionnel : laisser vide pour désactiver)
+billing_account = ""     # ex: "012345-678901-ABCDEF"
+budget_amount   = 100    # Budget mensuel cible en USD
+budget_currency = "USD"

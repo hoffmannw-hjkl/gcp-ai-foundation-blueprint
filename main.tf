@@ -124,3 +124,16 @@ module "observability" {
   enable_dashboard       = true
   dashboard_display_name = "🤖 AI Foundation (${local.name_prefix}) - Cockpit Observabilité"
 }
+
+# 8. FinOps: Cloud Billing Budget Alert (Optional)
+module "finops_budget" {
+  count  = var.billing_account != "" ? 1 : 0
+  source = "./modules/finops-budget"
+
+  billing_account_id = var.billing_account
+  project_id         = var.project_id
+  display_name       = "${local.name_prefix}-monthly-budget"
+  budget_amount      = var.budget_amount
+  currency_code      = var.budget_currency
+  alert_emails       = var.alert_email != "" ? [var.alert_email] : []
+}

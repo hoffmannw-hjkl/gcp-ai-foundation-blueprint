@@ -62,3 +62,8 @@ output "monitoring_dashboard_id" {
   description = "Cloud Monitoring dashboard ID."
   value       = try(module.observability[0].dashboard_id, null)
 }
+
+output "budget_id" {
+  description = "Billing budget resource ID (if enabled)."
+  value       = try(module.finops_budget[0].budget_id, null)
+}
