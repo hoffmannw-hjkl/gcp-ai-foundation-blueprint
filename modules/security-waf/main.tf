@@ -48,17 +48,29 @@ resource "google_compute_security_policy" "waf_policy" {
 
   # ----------------------------------------------------------------------------
   # OWASP Top 10 Rules: Core Rule Set (CRS) v3.3
+  #
+  # Two cross-cutting adjustments are applied to every rule below:
+  #
+  #  1. Path exclusion for /api/documents/upload. Cloud Armor inspects request
+  #     bodies, and the binary content of an uploaded PDF reliably trips the XSS
+  #     and protocol-attack signatures. Without this exclusion every document
+  #     upload is rejected with a 403 (body_denied_by_security_policy).
+  #
+  #  2. Preview mode is kept ONLY for the SQLi (2000) and XSS (2001) rules, which
+  #     still produce false positives on IAP session cookies and redirect tokens.
+  #     All other rules are actively enforced: leaving the whole rule set in
+  #     preview would mean the WAF logs attacks without ever blocking them.
   # ----------------------------------------------------------------------------
   dynamic "rule" {
     for_each = var.enable_owasp_rules ? [
-      { priority = "2000", expr = "evaluatePreconfiguredExpr('sqli-v33-stable', ['owasp-crs-v030301-id942420-sqli', 'owasp-crs-v030301-id942421-sqli', 'owasp-crs-v030301-id942430-sqli', 'owasp-crs-v030301-id942431-sqli', 'owasp-crs-v030301-id942432-sqli']) && !request.path.startsWith('/api/documents/upload')", desc = "OWASP CRS: SQL Injection protection (with IAP token and cookie exclusions)", preview = true },
-      { priority = "2001", expr = "evaluatePreconfiguredExpr('xss-v33-stable') && !request.path.startsWith('/api/documents/upload')", desc = "OWASP CRS: Cross-Site Scripting (XSS) protection", preview = true },
-      { priority = "2002", expr = "evaluatePreconfiguredExpr('lfi-v33-stable') && !request.path.startsWith('/api/documents/upload')", desc = "OWASP CRS: Local File Inclusion (LFI) protection", preview = true },
-      { priority = "2003", expr = "evaluatePreconfiguredExpr('rfi-v33-stable') && !request.path.startsWith('/api/documents/upload')", desc = "OWASP CRS: Remote File Inclusion (RFI) protection", preview = true },
-      { priority = "2004", expr = "evaluatePreconfiguredExpr('rce-v33-stable') && !request.path.startsWith('/api/documents/upload')", desc = "OWASP CRS: Remote Code Execution (RCE) protection", preview = true },
-      { priority = "2005", expr = "evaluatePreconfiguredExpr('protocolattack-v33-stable') && !request.path.startsWith('/api/documents/upload')", desc = "OWASP CRS: Protocol Attack protection", preview = true },
-      { priority = "2006", expr = "evaluatePreconfiguredExpr('scannerdetection-v33-stable') && !request.path.startsWith('/api/documents/upload')", desc = "OWASP CRS: Security Scanner Detection", preview = true },
-      { priority = "2007", expr = "evaluatePreconfiguredExpr('sessionfixation-v33-stable') && !request.path.startsWith('/api/documents/upload')", desc = "OWASP CRS: Session Fixation protection", preview = true }
+      { priority = "2000", expr = "evaluatePreconfiguredExpr('sqli-v33-stable', ['owasp-crs-v030301-id942420-sqli', 'owasp-crs-v030301-id942421-sqli', 'owasp-crs-v030301-id942430-sqli', 'owasp-crs-v030301-id942431-sqli', 'owasp-crs-v030301-id942432-sqli']) && !request.path.startsWith('/api/documents/upload')", desc = "OWASP CRS: SQL Injection protection (preview: false positives on IAP cookies)", preview = true },
+      { priority = "2001", expr = "evaluatePreconfiguredExpr('xss-v33-stable') && !request.path.startsWith('/api/documents/upload')", desc = "OWASP CRS: Cross-Site Scripting (XSS) protection (preview: false positives on IAP redirect tokens)", preview = true },
+      { priority = "2002", expr = "evaluatePreconfiguredExpr('lfi-v33-stable') && !request.path.startsWith('/api/documents/upload')", desc = "OWASP CRS: Local File Inclusion (LFI) protection", preview = var.preview_mode },
+      { priority = "2003", expr = "evaluatePreconfiguredExpr('rfi-v33-stable') && !request.path.startsWith('/api/documents/upload')", desc = "OWASP CRS: Remote File Inclusion (RFI) protection", preview = var.preview_mode },
+      { priority = "2004", expr = "evaluatePreconfiguredExpr('rce-v33-stable') && !request.path.startsWith('/api/documents/upload')", desc = "OWASP CRS: Remote Code Execution (RCE) protection", preview = var.preview_mode },
+      { priority = "2005", expr = "evaluatePreconfiguredExpr('protocolattack-v33-stable') && !request.path.startsWith('/api/documents/upload')", desc = "OWASP CRS: Protocol Attack protection", preview = var.preview_mode },
+      { priority = "2006", expr = "evaluatePreconfiguredExpr('scannerdetection-v33-stable') && !request.path.startsWith('/api/documents/upload')", desc = "OWASP CRS: Security Scanner Detection", preview = var.preview_mode },
+      { priority = "2007", expr = "evaluatePreconfiguredExpr('sessionfixation-v33-stable') && !request.path.startsWith('/api/documents/upload')", desc = "OWASP CRS: Session Fixation protection", preview = var.preview_mode }
     ] : []
 
     content {
