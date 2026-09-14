@@ -81,7 +81,9 @@ flowchart TD
 │
 ├── examples/
 │   ├── 01-minimal-cloudrun-ai/   # Fast (<3 min) Serverless Cloud Run + WAF prototype
-│   └── 02-enterprise-gke-rag/    # Enterprise Landing Zone: GKE Autopilot + Bastion + RAG + SRE
+│   ├── 02-enterprise-gke-rag/    # Enterprise Landing Zone: GKE Autopilot + Bastion + RAG + SRE
+│   ├── 03-sample-app-manifests/  # Kubernetes manifest templates (ServiceAccount, WAF, Ingress)
+│   └── 04-rag-comparison-chatbot/# Presales Demo: Go RAG Chatbot + split-screen comparison UI
 │
 ├── scripts/
 │   ├── bootstrap.sh              # GCP API enablement and Terraform state bucket creation
