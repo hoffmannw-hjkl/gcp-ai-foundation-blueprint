@@ -76,6 +76,7 @@ flowchart TD
 │   ├── compute-cloudrun/         # Cloud Run v2, Serverless VPC Access Connector, Dedicated SA
 │   ├── bastion/                  # Private Debian 12 Bastion VM, IAP, OS Login, kubectl
 │   ├── data-ai-foundation/       # Vertex AI, BigQuery Lakehouse, GCS RAG & Artifacts Buckets
+│   ├── finops-budget/            # Cloud Billing Budget alert (FinOps, 50/75/90/100% thresholds)
 │   └── observability/            # Logging Sink to BigQuery (schema resilience), Dashboard
 │
 ├── examples/
@@ -169,6 +170,11 @@ terraform apply
 - **SRE Alert Policy**: Triggers notifications when HTTP 5xx error rates exceed 5% over 5 minutes.
 - **Unified Cockpit**: Cloud Monitoring dashboard displaying GKE CPU/RAM, Cloud Run invocations, WAF blocks, and GCS storage volume.
 
+### 8. FinOps Budget Alert (`modules/finops-budget`)
+- **Configurable Monthly Spend Cap**: Target spend specified via `budget_amount` (e.g., 100 USD / EUR).
+- **Automated Gradual Thresholds**: Alerts trigger at 50%, 75%, 90%, and 100% of actual spend, plus 100% of forecasted spend.
+- **Notification Channel**: Direct email alerts dispatched to designated project administrators.
+
 ---
 
 ## 🔒 Argolis Compliance & Best Practices
@@ -176,6 +182,11 @@ terraform apply
 - **Policy `compute.vmExternalIpAccess`**: Zero compute instances or Kubernetes nodes attempt to bind public IPs.
 - **Zero Trust IAP**: Administrative entry is gated through `roles/iap.tunnelResourceAccessor`.
 - **Least Privilege**: Default compute service accounts and broad roles (`roles/owner`, `roles/editor`) are never assigned to workloads.
+- **Argolis & Cloudtop Multi-Account Auth**: In environments where local ADC (`gcloud auth application-default`) points to an external account blocked by `constraints/iam.allowedPolicyMemberDomains`, inject the Argolis account access token:
+  ```bash
+  export GOOGLE_OAUTH_ACCESS_TOKEN=$(gcloud auth print-access-token --account=user@your-domain.altostrat.com)
+  terraform apply
+  ```
 
 ---
 
