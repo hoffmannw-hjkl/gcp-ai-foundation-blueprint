@@ -1,3 +1,8 @@
+> 🇫🇷 **[Version Française](README.md)** | 🇬🇧 **[English Version](README-EN.md)**
+>
+> 🔗 **Écosystème EMEA SPARK & Synergie des Projets :**
+> Ce référentiel fournit le **socle d'infrastructure d'entreprise (Landing Zone IaC)**. Pour découvrir l'application métier d'Intelligence Artificielle complète déployée sur ce socle (GKE Autopilot, Cloud SQL pgvector, multimodalité Gemini et observatoire des finances publiques), consultez **[CivicLens (cloud-gtm/civiclens)](https://github.com/cloud-gtm/civiclens)**.
+
 # GCP AI Foundation Blueprint 🏛️⚡
 
 > **Socle d'Infrastructure Terraform modulaire, sécurisé et réutilisable pour toutes les démonstrations d'Intelligence Artificielle sur Google Cloud (Programmes Elevate & Spark).**
@@ -84,7 +89,8 @@ flowchart TD
 │   ├── 01-minimal-cloudrun-ai/   # Déploiement ultra-rapide (<3 min) Serverless Cloud Run + WAF
 │   ├── 02-enterprise-gke-rag/    # Landing Zone complète GKE Autopilot + Bastion + RAG + SRE
 │   ├── 03-sample-app-manifests/  # Templates de manifests Kubernetes (ServiceAccount, WAF, Ingress)
-│   └── 04-rag-comparison-chatbot/# Démo avant-vente : Chatbot RAG Go + UI split-screen "Avant / Après"
+│   ├── 04-rag-comparison-chatbot/# Démo avant-vente : Chatbot RAG Go + UI split-screen "Avant / Après"
+│   └── 💡 Application Référence  # [CivicLens](https://github.com/cloud-gtm/civiclens) : Plateforme complète Open Data & RAG
 │
 ├── scripts/
 │   ├── bootstrap.sh              # Activation des APIs GCP et création du bucket de state GCS
@@ -93,6 +99,9 @@ flowchart TD
 └── .github/workflows/
     └── terraform-lint.yml        # CI/CD: vérification de syntaxe, fmt et validation Terraform
 ```
+
+> 💡 **Cas d'Usage de Référence — [CivicLens](https://github.com/cloud-gtm/civiclens) :**
+> Si vous recherchez un exemple complet de solution applicative de bout-en-bout déployée sur ce socle (pipeline d'ingestion multimodale, Cloud SQL PostgreSQL avec `pgvector`, synthèse Gemini sur Vertex AI, Ingress IAP et Backup DR), explorez le projet compagnon **[CivicLens](https://github.com/cloud-gtm/civiclens)**.
 
 ---
 

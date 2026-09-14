@@ -153,3 +153,16 @@ Contrairement à un simple snapshot de disque, **Backup for GKE** capture :
 
 En cas de corruption ou de sinistre de zone/région, l'ensemble de l'application est restaurable en une seule commande (`gcloud beta container backup-restore restores create`) avec un **RTO < 10 minutes**.
 
+---
+
+## 8. Implémentation Applicative de Référence : CivicLens
+
+Ce blueprint fournit le socle neutre et réutilisable. Pour voir comment ces composants sont assemblés pour propulser une application métier complète :
+
+- **[CivicLens (cloud-gtm/civiclens)](https://github.com/cloud-gtm/civiclens)** :
+  - **Runtime Applicatif** : API FastAPI sur GKE Autopilot avec autoscaling.
+  - **Moteur RAG Hybride** : Cloud SQL PostgreSQL 16 avec extension vectorielle `pgvector` (HNSW) couplé à Vertex AI Gemini.
+  - **Souveraineté & Open Data** : Couverture analytique des 35 000 communes françaises (OFGL / DGFiP 2000-2025) et génération de rapports PDF certifiés M57.
+  - **Sécurité Périmétrique** : Exposition via External HTTPS Load Balancer, Ingress managé et authentification **Google Cloud Identity-Aware Proxy (IAP)**.
+
+

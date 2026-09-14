@@ -2,6 +2,9 @@
 
 Ce guide détaille pas-à-pas comment déployer et exécuter **votre propre application d'Intelligence Artificielle** (API REST FastAPI, agent GenAI, pipeline RAG, interface Streamlit, worker d'inférence) sur l'infrastructure provisionnée par le blueprint.
 
+> 🌟 **Exemple Concret & Complet en Production : [CivicLens](https://github.com/cloud-gtm/civiclens)**
+> Pour voir comment ce modèle d'intégration est appliqué à grande échelle sur une vraie application métier combinant GKE Autopilot, Cloud SQL PostgreSQL avec `pgvector`, synthèse multimodale Gemini et authentification IAP complète, consultez le dépôt **[CivicLens (cloud-gtm/civiclens)](https://github.com/cloud-gtm/civiclens)**.
+
 ---
 
 ## 🧭 Vue d'ensemble du flux de déploiement
