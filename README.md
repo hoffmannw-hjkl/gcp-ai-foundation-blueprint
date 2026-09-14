@@ -129,6 +129,11 @@ terraform plan
 terraform apply
 ```
 
+### 5. Déployer Votre Application IA sur cette Infrastructure
+Une fois l'infrastructure prête, vous pouvez déployer votre propre application (API REST, agent GenAI, UI Streamlit, pipeline RAG) :
+- Consultez le guide complet pas-à-pas : [**Guide d'Intégration Applicative**](docs/APPLICATION_INTEGRATION.md).
+- Utilisez les manifests prêts à l'emploi : [**Templates Kubernetes**](examples/03-sample-app-manifests/).
+
 ---
 
 ## 🧩 Les Modules en Détail

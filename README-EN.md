@@ -129,6 +129,11 @@ terraform plan
 terraform apply
 ```
 
+### 5. Deploy Your AI Application on this Infrastructure
+Once the infrastructure is up, you can deploy your own workloads (FastAPI backend, GenAI agent, Streamlit UI, RAG pipeline):
+- Step-by-step walkthrough: [**Application Integration Guide**](docs/APPLICATION_INTEGRATION-EN.md).
+- Ready-to-use templates: [**Kubernetes Manifests**](examples/03-sample-app-manifests/).
+
 ---
 
 ## 🧩 Detailed Module Guide

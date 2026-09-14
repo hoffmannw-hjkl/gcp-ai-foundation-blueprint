@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sample-ai-app
+  namespace: default
+  labels:
+    app: sample-ai-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: sample-ai-app
+  template:
+    metadata:
+      labels:
+        app: sample-ai-app
+    spec:
+      serviceAccountName: ai-workload-sa
+      containers:
+      - name: app
+        image: python:3.11-slim
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            pip install --no-cache-dir google-genai
+            python3 -c '
+            import os
+            from google import genai
+            print("🚀 Démarrage de l'agent GenAI...")
+            try:
+                client = genai.Client(vertexai=True, project=os.getenv("GCP_PROJECT"), location=os.getenv("GCP_REGION"))
+                resp = client.models.generate_content(model="gemini-2.5-flash", contents="Dis bonjour au programme Spark et confirme que tu tournes sur GKE Autopilot.")
+                print("✨ Réponse Vertex AI :", resp.text)
+            except Exception as e:
+                print("Erreur d'appel Vertex AI :", e)
+            '
+            # Serveur HTTP basique pour health check
+            python3 -m http.server 8080
+        ports:
+        - containerPort: 8080
+        env:
+        - name: GCP_PROJECT
+          value: "VOTRE_PROJECT_ID"
+        - name: GCP_REGION
+          value: "europe-west1"
+        - name: BQ_DATASET
+          value: "ai_demo_xxxx_lakehouse"
+        - name: RAG_BUCKET
+          value: "gs://VOTRE_PROJECT_ID-ai-demo-xxxx-rag-docs"
+        resources:
+          requests:
+            cpu: "250m"
+            memory: "512Mi"
+          limits:
+            cpu: "1"
+            memory: "2Gi"
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 10
