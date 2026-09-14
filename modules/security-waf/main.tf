@@ -51,7 +51,7 @@ resource "google_compute_security_policy" "waf_policy" {
   # ----------------------------------------------------------------------------
   dynamic "rule" {
     for_each = var.enable_owasp_rules ? [
-      { priority = "2000", expr = "evaluatePreconfiguredExpr('sqli-v33-stable')", desc = "OWASP CRS: SQL Injection protection" },
+      { priority = "2000", expr = "evaluatePreconfiguredExpr('sqli-v33-stable', ['owasp-crs-v030301-id942430-sqli'])", desc = "OWASP CRS: SQL Injection protection (with IAP token exclusion)" },
       { priority = "2001", expr = "evaluatePreconfiguredExpr('xss-v33-stable')", desc = "OWASP CRS: Cross-Site Scripting (XSS) protection" },
       { priority = "2002", expr = "evaluatePreconfiguredExpr('lfi-v33-stable')", desc = "OWASP CRS: Local File Inclusion (LFI) protection" },
       { priority = "2003", expr = "evaluatePreconfiguredExpr('rfi-v33-stable')", desc = "OWASP CRS: Remote File Inclusion (RFI) protection" },
