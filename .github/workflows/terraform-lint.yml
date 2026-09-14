@@ -1,0 +1,46 @@
+name: Terraform Lint & Validation
+
+on:
+  push:
+    branches: [ main, sync/** ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate:
+    name: Terraform Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.0"
+
+      - name: Check Terraform Formatting
+        run: terraform fmt -check -recursive
+
+      - name: Validate Root Configuration
+        run: |
+          terraform init -backend=false
+          terraform validate
+
+      - name: Validate Modules
+        run: |
+          for dir in modules/*/; do
+            if [ -d "$dir" ]; then
+              echo "Validating $dir..."
+              (cd "$dir" && terraform init -backend=false && terraform validate)
+            fi
+          done
+
+      - name: Validate Examples
+        run: |
+          for dir in examples/*/; do
+            if [ -d "$dir" ]; then
+              echo "Validating $dir..."
+              (cd "$dir" && terraform init -backend=false && terraform validate)
+            fi
+          done
