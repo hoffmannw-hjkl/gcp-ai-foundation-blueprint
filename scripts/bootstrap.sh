@@ -35,6 +35,7 @@ gcloud services enable \
   servicenetworking.googleapis.com \
   vpcaccess.googleapis.com \
   run.googleapis.com \
+  billingbudgets.googleapis.com \
   cloudresourcemanager.googleapis.com \
   iam.googleapis.com \
   --project="$PROJECT_ID"
