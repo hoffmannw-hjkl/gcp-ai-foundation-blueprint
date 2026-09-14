@@ -1,0 +1,35 @@
+# ==============================================================================
+# Configuration Exemple pour GCP AI Foundation Blueprint
+# Copiez ce fichier vers 'terraform.tfvars' et personnalisez les valeurs.
+# ==============================================================================
+
+# ID du projet Google Cloud cible (ex: votre projet Argolis ou Sandbox Elevate)
+project_id = "my-gcp-ai-project-id"
+
+# Région et Zone principales (Data Residency & Latence)
+region = "europe-west1"
+zone   = "europe-west1-b"
+
+# Préfixe pour nommer harmonieusement toutes les ressources
+resource_prefix = "ai-demo"
+
+# Options d'architecture Compute
+enable_gke      = true   # Activer le cluster GKE Autopilot privé
+enable_cloudrun = false  # Activer le service Cloud Run Serverless (alternative rapide)
+enable_bastion  = true   # Activer la VM Bastion privée sous IAP
+
+# Sécurité & WAF
+enable_waf  = true
+domain_name = ""                     # ex: "demo.altostrat.com" (laisser vide si pas de domaine)
+admin_email = "user@example.com"    # Administrateur pour l'accès IAP
+
+# Observabilité & Alerting
+enable_observability = true
+alert_email          = "sre-alerts@example.com"
+
+# Labels / FinOps
+labels = {
+  environment = "demo"
+  managed_by  = "terraform"
+  program     = "elevate-spark"
+}
