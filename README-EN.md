@@ -77,6 +77,7 @@ flowchart TD
 │   ├── bastion/                  # Private Debian 12 Bastion VM, IAP, OS Login, kubectl
 │   ├── data-ai-foundation/       # Vertex AI, BigQuery Lakehouse, GCS RAG & Artifacts Buckets
 │   ├── finops-budget/            # Cloud Billing Budget alert (FinOps, 50/75/90/100% thresholds)
+│   ├── backup-dr/                # Resilience & DR: WORM immutable vaults, Backup for GKE (app state & PVCs)
 │   └── observability/            # Logging Sink to BigQuery (schema resilience), Dashboard
 │
 ├── examples/
@@ -181,6 +182,12 @@ Once the infrastructure is up, you can deploy your own workloads (FastAPI backen
 - **Configurable Monthly Spend Cap**: Target spend specified via `budget_amount` (e.g., 100 USD / EUR).
 - **Automated Gradual Thresholds**: Alerts trigger at 50%, 75%, 90%, and 100% of actual spend, plus 100% of forecasted spend.
 - **Notification Channel**: Direct email alerts dispatched to designated project administrators.
+
+### 9. Backup & Disaster Recovery (`modules/backup-dr`)
+- **WORM Immutable Vaults (Backup and DR Service)**: Backup vaults protected with enforced minimum retention locks (regulatory compliance & ransomware defense).
+  - *Operational Vault*: Primary region (`europe-west1`), 7-day retention.
+  - *Geo-Redundant DR Vault*: Secondary region (`europe-west4`), 4-week retention lock.
+- **Application State & Data Protection (Backup for GKE)**: Automated daily backups (`0 2 * * *`) covering all Kubernetes resources (Deployments, Services, ConfigMaps, Secrets) and Persistent Volume Claims (CSI volumes), delivering 24h RPO and sub-10 minute RTO.
 
 ---
 

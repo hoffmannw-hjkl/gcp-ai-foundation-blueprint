@@ -121,3 +121,35 @@ Les buckets Google Cloud Storage partagent un espace de nommage global unique à
    - L'unicité absolue des noms de buckets.
    - La cohérence visuelle dans la console GCP.
    - La stabilité dans le fichier d'état (`.tfstate`).
+
+---
+
+## 7. Stratégie de Sauvegarde & Disaster Recovery (Backup & DR)
+
+Pour les charges de travail critiques et les démonstrations soumises à de fortes exigences de conformité (secteur bancaire, santé, secteur public), le module `backup-dr` implémente une stratégie de résilience à deux niveaux :
+
+```mermaid
+flowchart TD
+    subgraph Primary_Region ["Région Primaire (europe-west1)"]
+        GKE["GKE Autopilot Workloads\n(Deployments, Pods, Services)"]
+        Secrets["Kubernetes Secrets & ConfigMaps"]
+        PVC["Persistent Volumes (CSI / Filestore)"]
+        
+        GKE & Secrets & PVC -->|Backup for GKE\n(Plan quotidien 02h00 UTC)| GKEPlan["GKE Backup Plan\n(Rétention 30 jours)"]
+        
+        Bastion["Bastion & Disques Compute"] -->|Snapshot Quotidien| VaultDaily["Vault Opérationnel Local\n- WORM Lock 7 jours"]
+    end
+
+    subgraph Secondary_DR_Region ["Région de Repli DR (europe-west4)"]
+        VaultDaily -.->|Réplication Cross-Région\nAnti-Ransomware| VaultGeo["Vault Géo-Redondant DR\n- WORM Lock 4 semaines"]
+    end
+```
+
+### Protection de l'État Applicatif (Backup for GKE)
+Contrairement à un simple snapshot de disque, **Backup for GKE** capture :
+- La configuration complète du cluster et des namespaces (ressources Kubernetes déclaratives).
+- Les données d'état stockées sur les Persistent Volume Claims (PVC).
+- Les Secrets et certificats TLS.
+
+En cas de corruption ou de sinistre de zone/région, l'ensemble de l'application est restaurable en une seule commande (`gcloud beta container backup-restore restores create`) avec un **RTO < 10 minutes**.
+
