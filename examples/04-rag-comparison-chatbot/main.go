@@ -132,36 +132,78 @@ func (s *ServerState) handleDocuments(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(s.documents)
 }
 
-// Handler Upload : ajout de document ou URL à la volée
+// Handler Upload : ajout de document (fichier uploadé, texte ou URL) à la volée
 func (s *ServerState) handleUpload(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
 		return
 	}
 
-	var req struct {
-		Title   string `json:"title"`
-		Source  string `json:"source"`
-		Content string `json:"content"`
+	var title, source, content string
+
+	contentType := r.Header.Get("Content-Type")
+	if strings.HasPrefix(contentType, "multipart/form-data") {
+		// Gestion de l'upload de fichier direct via formulaire multipart
+		if err := r.ParseMultipartForm(10 << 20); err != nil { // 10 Mo max
+			http.Error(w, "Erreur lecture fichier : "+err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		file, header, err := r.FormFile("file")
+		if err == nil {
+			defer file.Close()
+			fileBytes, readErr := io.ReadAll(file)
+			if readErr != nil {
+				http.Error(w, "Erreur lecture contenu fichier", http.StatusInternalServerError)
+				return
+			}
+			content = string(fileBytes)
+			title = header.Filename
+			source = "gs://wh-ai-blueprint-a363-rag-docs/" + header.Filename
+		}
+
+		if customTitle := r.FormValue("title"); customTitle != "" {
+			title = customTitle
+		}
+		if customSource := r.FormValue("source"); customSource != "" {
+			source = customSource
+		}
+		if customContent := r.FormValue("content"); customContent != "" {
+			content = customContent
+		}
+	} else {
+		// Gestion du payload JSON standard
+		var req struct {
+			Title   string `json:"title"`
+			Source  string `json:"source"`
+			Content string `json:"content"`
+		}
+
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "Corps de requête invalide", http.StatusBadRequest)
+			return
+		}
+		title = req.Title
+		source = req.Source
+		content = req.Content
 	}
 
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Corps de requête invalide", http.StatusBadRequest)
+	if title == "" || content == "" {
+		http.Error(w, "Titre et contenu (ou fichier) requis", http.StatusBadRequest)
 		return
 	}
 
-	if req.Title == "" || req.Content == "" {
-		http.Error(w, "Title et Content sont requis", http.StatusBadRequest)
-		return
+	if source == "" {
+		source = "gs://wh-ai-blueprint-a363-rag-docs/" + title
 	}
 
 	doc := Document{
-		ID:        fmt.Sprintf("doc-%d", time.Now().Unix()),
-		Title:     req.Title,
-		Source:    req.Source,
+		ID:        fmt.Sprintf("doc-%d", time.Now().UnixNano()),
+		Title:     title,
+		Source:    source,
 		Status:    "indexing",
-		Content:   req.Content,
-		Snippet:   truncateText(req.Content, 120),
+		Content:   content,
+		Snippet:   truncateText(content, 140),
 		CreatedAt: time.Now(),
 	}
 
@@ -171,7 +213,7 @@ func (s *ServerState) handleUpload(w http.ResponseWriter, r *http.Request) {
 
 	// Simulation de fin d'indexation asynchrone (pour démonstration fluide)
 	go func(id string) {
-		time.Sleep(5 * time.Second)
+		time.Sleep(4 * time.Second)
 		s.mu.Lock()
 		for i := range s.documents {
 			if s.documents[i].ID == id {
