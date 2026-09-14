@@ -1,0 +1,12 @@
+apiVersion: cloud.google.com/v1
+kind: BackendConfig
+metadata:
+  name: ai-app-backend-config
+  namespace: default
+spec:
+  securityPolicy:
+    # Remplacez par le nom de la politique WAF créée par Terraform
+    name: "ai-demo-xxxx-waf-policy"
+  timeoutSec: 300
+  connectionDraining:
+    drainingTimeoutSec: 60

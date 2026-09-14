@@ -1,0 +1,20 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: sample-ai-ingress
+  namespace: default
+  annotations:
+    kubernetes.io/ingress.class: "gce"
+    # Remplacez par le nom de l'adresse IP globale externe créée par Terraform
+    kubernetes.io/ingress.global-static-ip-name: "ai-demo-xxxx-global-ip"
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /*
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: sample-ai-service
+            port:
+              name: http
