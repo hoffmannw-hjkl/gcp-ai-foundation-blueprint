@@ -137,3 +137,20 @@ module "finops_budget" {
   currency_code      = var.budget_currency
   alert_emails       = var.alert_email != "" ? [var.alert_email] : []
 }
+
+# 9. Backup & Disaster Recovery (Optional: WORM Vaults & GKE Workload State)
+module "backup_dr" {
+  count  = var.enable_backup_dr ? 1 : 0
+  source = "./modules/backup-dr"
+
+  project_id                 = var.project_id
+  region                     = var.region
+  dr_region                  = var.dr_region
+  vault_prefix               = local.name_prefix
+  daily_retention_days       = var.backup_daily_retention_days
+  weekly_retention_weeks     = var.backup_weekly_retention_weeks
+  enable_geo_vault           = var.enable_geo_dr_vault
+  enable_gke_workload_backup = var.enable_gke
+  gke_cluster_id             = var.enable_gke ? module.gke[0].cluster_id : ""
+}
+

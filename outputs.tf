@@ -67,3 +67,19 @@ output "budget_id" {
   description = "Billing budget resource ID (if enabled)."
   value       = try(module.finops_budget[0].budget_id, null)
 }
+
+output "backup_daily_vault_id" {
+  description = "Backup and DR daily operational vault ID (if enabled)."
+  value       = try(module.backup_dr[0].daily_vault_id, null)
+}
+
+output "backup_geo_dr_vault_id" {
+  description = "Backup and DR geo-redundant DR vault ID (if enabled)."
+  value       = try(module.backup_dr[0].geo_dr_vault_id, null)
+}
+
+output "gke_backup_plan_id" {
+  description = "Backup for GKE application state plan ID (if enabled)."
+  value       = try(module.backup_dr[0].gke_backup_plan_id, null)
+}
+

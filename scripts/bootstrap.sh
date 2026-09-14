@@ -36,6 +36,8 @@ gcloud services enable \
   vpcaccess.googleapis.com \
   run.googleapis.com \
   billingbudgets.googleapis.com \
+  backupdr.googleapis.com \
+  gkebackup.googleapis.com \
   cloudresourcemanager.googleapis.com \
   iam.googleapis.com \
   --project="$PROJECT_ID"

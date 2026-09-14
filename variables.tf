@@ -108,3 +108,34 @@ variable "budget_currency" {
   type        = string
   default     = "USD"
 }
+
+variable "enable_backup_dr" {
+  description = "Whether to provision the Backup & DR module (WORM compliance vaults and GKE workload backups)."
+  type        = bool
+  default     = false
+}
+
+variable "dr_region" {
+  description = "Secondary GCP region for geo-redundant DR vaults."
+  type        = string
+  default     = "europe-west4"
+}
+
+variable "backup_daily_retention_days" {
+  description = "Retention duration for daily operational backup vault (in days)."
+  type        = number
+  default     = 7
+}
+
+variable "backup_weekly_retention_weeks" {
+  description = "Retention duration for weekly geo-redundant DR backup vault (in weeks)."
+  type        = number
+  default     = 4
+}
+
+variable "enable_geo_dr_vault" {
+  description = "Whether to provision a cross-region geo-redundant backup vault in dr_region."
+  type        = bool
+  default     = true
+}
+

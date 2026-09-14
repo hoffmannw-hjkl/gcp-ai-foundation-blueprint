@@ -77,6 +77,7 @@ flowchart TD
 │   ├── bastion/                  # VM Bastion Debian 12 privée, IAP, OS Login, kubectl
 │   ├── data-ai-foundation/       # Vertex AI, BigQuery Lakehouse, Buckets GCS RAG & Artifacts
 │   ├── finops-budget/            # Alerte budgétaire Cloud Billing (FinOps, seuils 50/75/90/100%)
+│   ├── backup-dr/                # Résilience & DR : Vaults immuables WORM, Backup for GKE (app & PVCs)
 │   └── observability/            # Logging Sink vers BigQuery (résilience schéma), Dashboard
 │
 ├── examples/
@@ -182,6 +183,12 @@ Une fois l'infrastructure prête, vous pouvez déployer votre propre application
 - **Plafond Mensuel Paramétrable** : Montant cible défini par `budget_amount` (ex: 100 USD / EUR).
 - **Seuils Graduels Automatisés** : Déclenchement d'alertes à 50%, 75%, 90% et 100% de la consommation réelle, ainsi qu'à 100% de la prévision de dépenses (*forecasted spend*).
 - **Canal de Notification** : Envoi direct des alertes par email au responsable du projet.
+
+### 9. Backup & Disaster Recovery (`modules/backup-dr`)
+- **Vaults Immuables WORM (Backup and DR Service)** : Coffres-forts de sauvegarde avec verrouillage de rétention minimale (conformité réglementaire & anti-ransomware).
+  - *Vault Opérationnel* : région primaire (`europe-west1`), rétention quotidienne (7 jours).
+  - *Vault Géo-Redondant* : région DR (`europe-west4`), rétention hebdomadaire (4 semaines).
+- **Sauvegarde de l'État Applicatif (Backup for GKE)** : Sauvegarde automatisée de l'ensemble de l'état applicatif Kubernetes (Deployments, Services, Ingress, Secrets, ConfigMaps) et des volumes persistants (Persistent Volumes / CSI), garantissant un RPO de 24h et un RTO de quelques minutes.
 
 ---
 
