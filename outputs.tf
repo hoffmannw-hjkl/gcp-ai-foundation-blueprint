@@ -28,6 +28,11 @@ output "lakehouse_dataset_id" {
   value       = module.data_ai.dataset_id
 }
 
+output "rag_bucket_name" {
+  description = "Name of the GCS Bucket for RAG documents."
+  value       = module.data_ai.rag_bucket_name
+}
+
 output "rag_bucket_url" {
   description = "GCS Bucket URL for RAG documents."
   value       = module.data_ai.rag_bucket_url
@@ -46,6 +51,11 @@ output "gke_cluster_name" {
 output "gke_cluster_endpoint" {
   description = "GKE Autopilot cluster control plane endpoint (if enabled)."
   value       = try(module.gke[0].cluster_endpoint, null)
+}
+
+output "gke_app_service_account_email" {
+  description = "GSA Email for GKE Workload Identity."
+  value       = try(module.gke[0].workload_service_account_email, null)
 }
 
 output "cloudrun_service_uri" {
