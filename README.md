@@ -1,32 +1,26 @@
 > 🇫🇷 **[Version Française](README.md)** | 🇬🇧 **[English Version](README-EN.md)**
 >
-> 🔗 **Écosystème EMEA SPARK & Synergie des Projets :**
-> Ce référentiel fournit le **socle d'infrastructure d'entreprise (Landing Zone IaC)**. Pour découvrir l'application métier d'Intelligence Artificielle complète déployée sur ce socle (GKE Autopilot, Cloud SQL pgvector, multimodalité Gemini et observatoire des finances publiques), consultez **[CivicLens (cloud-gtm/civiclens)](https://github.com/cloud-gtm/civiclens)**.
+> 🔗 **Écosystème EMEA SPARK & Applications Compagnons :**
+> Ce référentiel fournit le **socle d'infrastructure d'entreprise (Landing Zone IaC)**. Pour explorer les applications déployées sur ce socle :
+> - **[RAG Comparison Demo (cloud-gtm/app-rag-comparison)](https://github.com/cloud-gtm/app-rag-comparison)** : Comparateur Recherche Lexicale vs RAG Hybride (Embeddings 002 + BM25), streaming SSE et évaluation GenAI par Autorater Vertex AI.
+> - **[CivicLens (cloud-gtm/civiclens)](https://github.com/cloud-gtm/civiclens)** : Plateforme analytique de finances publiques (GKE Autopilot, Cloud SQL pgvector, Gemini multimodal).
 
-# GCP AI Foundation Blueprint 🏛️⚡
+# GCP AI Foundation Blueprint
 
-> **Socle d'Infrastructure Terraform modulaire, sécurisé et réutilisable pour toutes les démonstrations d'Intelligence Artificielle sur Google Cloud (Programmes Elevate & Spark).**
+[![Terraform Version](https://img.shields.io/badge/Terraform-1.5+-623CE4?style=flat&logo=terraform)](https://www.terraform.io/)
+[![Google Cloud Provider](https://img.shields.io/badge/Google_Cloud_Provider-5.0+-4285F4?style=flat&logo=google-cloud)](https://registry.terraform.io/providers/hashicorp/google/latest)
+[![Security Standard](https://img.shields.io/badge/Security-Argolis_%7C_Zero_Trust-green)](docs/ARCHITECTURE.md)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
-Ce référentiel fournit une **Landing Zone / Baseline** prête à l'emploi et agnostique du code applicatif. Il implémente les meilleures pratiques **Google Cloud Well-Architected**, respecte strictement les contraintes de gouvernance **Argolis** et applique les standards de sécurité d'entreprise les plus stricts (**Zero Trust, WAF, Least Privilege, résilience d'observabilité**).
+Socle d'infrastructure Terraform modulaire pour le déploiement d'applications d'Intelligence Artificielle et de charges de travail GenAI sur Google Cloud Platform.
 
----
-
-## 🎯 Pourquoi ce Blueprint ?
-
-Lors de démonstrations client, POCs ou programmes d'accélération (Elevate, Spark, Hackathons), recréer à chaque fois les réseaux, les passerelles NAT, les clusters Kubernetes, les politiques Cloud Armor WAF et la tuyauterie de logs fait perdre un temps précieux et introduit des failles de sécurité.
-
-Ce blueprint résout ce problème en offrant :
-1. **Un découpage modulaire standardisé** : Réseau, WAF, Compute (GKE / Cloud Run), Bastion, Data/AI et Observabilité.
-2. **100% Argolis-Ready** : Zéro IP publique sur les VMs et nœuds, sortie Internet via Cloud NAT, administration sécurisée via Identity-Aware Proxy (IAP).
-3. **Sécurité Edge & Zero Trust native** : Cloud Armor configuré avec le jeu de règles CRS OWASP Top 10 (SQLi, XSS, RCE...), limitation de débit (Rate Limiting) et protection adaptative Layer 7.
-4. **Data & AI Stack Baseline** : BigQuery Lakehouse, Buckets GCS sécurisés (UBLA, versioning) pour les documents RAG et modèles, Workload Identity préconfiguré avec `roles/aiplatform.user` et `roles/bigquery.dataEditor`.
-5. **Observabilité SRE durcie** : Sink Cloud Logging vers BigQuery protégé contre les dérives de schéma (`table_invalid_schema`) causées par les conteneurs système, tableau de bord Cloud Monitoring unifié.
+Le blueprint fournit une architecture de référence conforme aux recommandations du **Google Cloud Well-Architected Framework** et aux contraintes de gouvernance **Google Cloud Argolis** (aucune adresse IP publique, administration par tunnel IAP, chiffrement Google-managed et principe du moindre privilège).
 
 ---
 
-## 🏗️ Architecture Globale
+## Architecture Globale
 
-> 📐 **Schéma interactif GCP Draw** : Le schéma officiel au format GCP Draw (`go/gcpdraw`) est disponible dans [docs/architecture-gcpdraw.md](docs/architecture-gcpdraw.md).
+Consultez le schéma interactif officiel au format GCP Draw dans [docs/architecture-gcpdraw.md](docs/architecture-gcpdraw.md).
 
 ```mermaid
 flowchart TD
@@ -36,9 +30,9 @@ flowchart TD
         LB --> IAP["Identity-Aware Proxy (IAP)\nZero Trust OAuth2"]
     end
 
-    subgraph VPC ["2. VPC Privé (Argolis-Ready, Pas d'IP Publiques)"]
+    subgraph VPC ["2. VPC Privé (Argolis-Ready, Zéro IP Publique)"]
         IAP -->|Ingress Sécurisé| GKE["Cluster GKE Autopilot Privé\n- Nœuds 100% privés\n- Workload Identity (GSA <-> KSA)"]
-        IAP -->|Ingress Sécurisé| CR["Cloud Run v2 (Serverless)\n+ Connecteur Serverless VPC"]
+        IAP -->|Ingress Sécurisé| CR["Cloud Run v2 (Serverless)\n+ Direct VPC Egress"]
         
         Admin(["Admin / SRE"]) -->|IAP Tunnel 35.235.240.0/20| Bastion["VM Bastion Privée\n(OS Login, Debian 12, kubectl)"]
         Bastion -.->|Administration privée| GKE
@@ -49,7 +43,7 @@ flowchart TD
     end
 
     subgraph Data_AI ["3. Data & AI Managed Foundation"]
-        GKE & CR -->|Private Google Access / Workload Identity| VertexAI["Vertex AI / Gemini API\n(Gemini 2.5/3.6, Model Garden)"]
+        GKE & CR -->|Private Google Access / Workload Identity| VertexAI["Vertex AI / Gemini API\n(Gemini 3.5/3.8, text-embedding-002)"]
         GKE & CR -->|Private Service Access / Peering| BQ["BigQuery AI Lakehouse\n- Datasets analytiques\n- Vector Indexing & Embeddings"]
         GKE & CR --> GCS["Cloud Storage\n- gs://...-rag-docs (UBLA, Versioning)\n- gs://...-artifacts (Modèles, Cache)"]
     end
@@ -63,153 +57,112 @@ flowchart TD
 
 ---
 
-## 📁 Structure du Répertoire
+## Catalogue des Modules
 
-```text
-.
-├── GEMINI.md                     # Directives de développement & cadence de synchronisation Git
-├── README.md                     # Documentation officielle en français
-├── README-EN.md                  # Documentation officielle en anglais
-├── main.tf                       # Module racine orchestrant l'ensemble de la baseline
-├── variables.tf                  # Variables paramétrables (région, préfixe, flags d'activation)
-├── outputs.tf                    # Points de terminaison, IPs et identifiants générés
-├── versions.tf                   # Versions minimales Terraform et provider Google Cloud
-├── terraform.tfvars.example      # Fichier de valeurs d'exemple
-│
-├── modules/
-│   ├── networking/               # VPC, Subnet, Secondary Ranges, Cloud NAT, PSA, Firewall
-│   ├── security-waf/             # Cloud Armor WAF (OWASP Top 10, Rate Limiting), IP, Cert SSL
-│   ├── compute-gke/              # GKE Autopilot privé, Workload Identity, Least-Privilege IAM
-│   ├── compute-cloudrun/         # Cloud Run v2, Connecteur Serverless VPC, SA dédié
-│   ├── bastion/                  # VM Bastion Debian 12 privée, IAP, OS Login, kubectl
-│   ├── data-ai-foundation/       # Vertex AI, BigQuery Lakehouse, Buckets GCS RAG & Artifacts
-│   ├── finops-budget/            # Alerte budgétaire Cloud Billing (FinOps, seuils 50/75/90/100%)
-│   ├── backup-dr/                # Résilience & DR : Vaults immuables WORM, Backup for GKE (app & PVCs)
-│   └── observability/            # Logging Sink vers BigQuery (résilience schéma), Dashboard
-│
-├── examples/
-│   ├── 01-minimal-cloudrun-ai/   # Déploiement ultra-rapide (<3 min) Serverless Cloud Run + WAF
-│   ├── 02-enterprise-gke-rag/    # Landing Zone complète GKE Autopilot + Bastion + RAG + SRE
-│   ├── 03-sample-app-manifests/  # Templates de manifests Kubernetes (ServiceAccount, WAF, Ingress)
-│   ├── 04-rag-comparison-chatbot/# Démo avant-vente : Chatbot RAG Go + UI split-screen "Avant / Après"
-│   └── 💡 Application Dédiée     # [app-civiclens](https://github.com/cloud-gtm/app-civiclens) : Code & Déploiement Automatisé
-│
-├── scripts/
-│   ├── bootstrap.sh              # Activation des APIs GCP et création du bucket de state GCS
-│   └── sync-gtm.sh               # Synchronisation Git vers le dépôt officiel cloud-gtm
-│
-└── .github/workflows/
-    └── terraform-lint.yml        # CI/CD: vérification de syntaxe, fmt et validation Terraform
-```
+Le blueprint est décomposé en 9 modules Terraform autonomes et composables :
 
-> 💡 **Application Métier de Référence — [app-civiclens](https://github.com/cloud-gtm/app-civiclens) :**
-> Si vous recherchez un exemple complet de solution applicative découplée et prête à être déployée en une commande sur ce blueprint (FastAPI, Cloud SQL `pgvector`, Gemini 2.5 Flash sur Vertex AI, Ingress IAP), explorez le dépôt d'application **[app-civiclens](https://github.com/cloud-gtm/app-civiclens)**.
+| Module | Répertoire | Description & Ressources Clés |
+| :--- | :--- | :--- |
+| **Networking** | `modules/networking` | VPC custom, sous-réseau primaire (`10.10.0.0/20`), plages secondaires Pods (`10.20.0.0/16`) et Services (`10.30.0.0/20`), Cloud Router, Cloud NAT et Private Service Access (PSA). |
+| **Security & WAF** | `modules/security-waf` | Stratégie Cloud Armor WAF avec règles CRS OWASP Top 10 (SQLi, XSS, RCE), rate limiting, protection adaptative L7, IP externe statique et certificat SSL. |
+| **Compute GKE** | `modules/compute-gke` | Cluster GKE Autopilot 100 % privé, configuration Workload Identity, plan de sauvegarde Backup for GKE et permissions IAM ciblées (`roles/aiplatform.user`, `roles/storage.objectUser`). |
+| **Compute Cloud Run** | `modules/compute-cloudrun` | Service Cloud Run v2 serverless avec Direct VPC Egress, auto-scaling de 0 à 5 instances, `no-cpu-throttling`, timeout de 300s et Service Account dédié. |
+| **Data & AI Foundation** | `modules/data-ai-foundation` | Activation des APIs Vertex AI et BigQuery, dataset BigQuery Lakehouse, bucket GCS RAG documents (`versioning`, `UBLA`) et bucket d'artefacts. |
+| **Bastion Host** | `modules/bastion` | Instance Compute Engine Debian 12 sans IP publique, connectable exclusivement par tunnel IAP, avec `kubectl`, `gke-gcloud-auth-plugin`, `tinyproxy` et `OS Login`. |
+| **Observabilité SRE** | `modules/observability` | Sink Cloud Logging avec filtre d'exclusion des namespaces système (prévention de l'erreur `table_invalid_schema`), dataset BigQuery partitionné et Dashboard Cloud Monitoring. |
+| **FinOps Budget** | `modules/finops-budget` | Alerte budgétaire Cloud Billing avec seuils à 50 %, 75 %, 90 %, 100 % réel et 100 % prévisionnel, canal de notification par email. |
+| **Backup & DR** | `modules/backup-dr` | Coffres-forts immuables WORM pour la rétention opérationnelle et géo-redondante, intégration Backup for GKE pour l'état applicatif et les volumes persistants. |
 
 ---
 
-## 🚀 Démarrage Rapide
+## Variables Principales
+
+Le module racine (`main.tf`) expose les paramètres clés suivants :
+
+| Variable | Type | Valeur par défaut | Description |
+| :--- | :--- | :--- | :--- |
+| `project_id` | Chaîne | *Requis* | Identifiant du projet Google Cloud cible. |
+| `region` | Chaîne | `europe-west1` | Région principale de déploiement des ressources. |
+| `resource_prefix` | Chaîne | `ai-demo` | Préfixe appliqué à l'ensemble des ressources créées. |
+| `enable_gke` | Booléen | `true` | Active ou désactive le provisionnement du cluster GKE Autopilot. |
+| `enable_cloudrun` | Booléen | `true` | Active ou désactive le déploiement du service Cloud Run v2. |
+| `enable_waf` | Booléen | `true` | Active la politique de sécurité Cloud Armor WAF et le Load Balancer. |
+| `enable_bastion` | Booléen | `true` | Provisionne la machine virtuelle d'administration privée via IAP. |
+| `enable_observability` | Booléen | `true` | Crée le sink Cloud Logging vers BigQuery et le dashboard de monitoring. |
+| `billing_account` | Chaîne | `""` | Identifiant du compte de facturation (requis pour `enable_finops_budget`). |
+| `budget_amount` | Nombre | `100` | Montant mensuel cible pour le calcul des seuils d'alerte budgétaire. |
+
+---
+
+## Outputs Principaux
+
+Les outputs exportés à la racine du projet permettent d'interconnecter directement les applications clientes :
+
+| Output | Description |
+| :--- | :--- |
+| `vpc_network_name` | Nom du VPC privé (`{prefix}-vpc`). |
+| `subnet_id` | Identifiant du sous-réseau primaire (`{prefix}-subnet`). |
+| `external_ip` | Adresse IP publique réservée pour le Load Balancer HTTPS. |
+| `waf_policy_id` | Identifiant de la stratégie Cloud Armor WAF. |
+| `lakehouse_dataset_id` | Nom du dataset BigQuery Lakehouse créé. |
+| `rag_bucket_name` | Nom du bucket Cloud Storage pour la persistance RAG (`{project_id}-{prefix}-rag-docs`). |
+| `rag_bucket_url` | URL `gs://` du bucket Cloud Storage RAG. |
+| `gke_cluster_name` | Nom du cluster GKE Autopilot. |
+| `gke_app_service_account_email` | Adresse email du Google Service Account pour GKE Workload Identity. |
+| `cloudrun_service_uri` | URI HTTPS du service Cloud Run v2. |
+| `bastion_ssh_command` | Commande gcloud pour se connecter au bastion via tunnel IAP. |
+
+---
+
+## Démarrage Rapide
 
 ### 1. Prérequis
 - `gcloud` CLI authentifié (`gcloud auth login` et `gcloud auth application-default login`).
-- `terraform` (v1.5.0 ou supérieur).
-- Droits `roles/owner` ou `roles/editor` sur votre projet GCP cible (Argolis ou Sandbox).
+- `terraform` version 1.5.0 ou supérieure.
+- Rôle `roles/owner` ou `roles/editor` sur le projet GCP cible.
 
-### 2. Initialisation du Projet GCP
-Exécutez le script de bootstrap pour activer automatiquement toutes les APIs requises et créer le bucket de stockage de l'état Terraform :
+### 2. Initialisation du Projet
+Exécutez le script d'initialisation pour activer les APIs requises et créer le bucket d'état distant :
 
 ```bash
 ./scripts/bootstrap.sh <VOTRE_PROJECT_ID> europe-west1
 ```
 
-### 3. Configuration des Variables
-Créez votre fichier `terraform.tfvars` à partir du modèle fourni :
+### 3. Configuration & Déploiement
 
 ```bash
+# 1. Copier le fichier d'exemple des variables
 cp terraform.tfvars.example terraform.tfvars
-```
 
-Éditez `terraform.tfvars` avec votre `project_id` et votre adresse email pour les accès d'administration IAP.
+# 2. Renseigner au minimum project_id et admin_email dans terraform.tfvars
 
-### 4. Déploiement
-
-```bash
-# Initialiser Terraform
+# 3. Initialiser les providers et modules
 terraform init
 
-# Vérifier le plan d'exécution
+# 4. Valider le plan d'exécution
 terraform plan
 
-# Appliquer le déploiement
+# 5. Appliquer l'infrastructure
 terraform apply
 ```
 
-### 5. Déployer Votre Application IA sur cette Infrastructure
-Une fois l'infrastructure prête, vous pouvez déployer votre propre application (API REST, agent GenAI, UI Streamlit, pipeline RAG) :
-- Consultez le guide complet pas-à-pas : [**Guide d'Intégration Applicative**](docs/APPLICATION_INTEGRATION.md).
-- Utilisez les manifests prêts à l'emploi : [**Templates Kubernetes**](examples/03-sample-app-manifests/).
+### 4. Déploiement d'une Application sur ce Socle
+Une fois l'infrastructure provisionnée, déployez l'une des applications compatibles :
+- Pour déployer le chatbot de comparaison RAG :
+  ```bash
+  cd ../app-rag-comparison
+  ./scripts/deploy-to-blueprint.sh --blueprint-dir=../gcp-ai-foundation-blueprint
+  ```
+- Consultez le [Guide d'Intégration Applicative](docs/APPLICATION_INTEGRATION.md) pour les architectures personnalisées.
 
 ---
 
-## 🧩 Les Modules en Détail
+## Sécurité & Conformité Argolis
 
-### 1. Networking (`modules/networking`)
-- **VPC & Subnet** : Sous-réseau primaire avec plages secondaires pour les Pods GKE (`10.20.0.0/16`) et Services (`10.30.0.0/20`).
-- **Private Google Access** : Activé par défaut pour permettre aux ressources privées d'appeler les APIs Google sans IP publique.
-- **Cloud NAT & Cloud Router** : Allocation automatique d'IPs de sortie pour le trafic Internet sortant.
-- **Private Service Access (PSA)** : Bloc d'adresses internes réservé et peering automatique pour Cloud SQL ou les endpoints privés Vertex AI.
-
-### 2. Security & WAF (`modules/security-waf`)
-- **Règles OWASP Top 10** : Protection contre l'injection SQL (`sqli-v33-stable`), XSS (`xss-v33-stable`), LFI, RFI, RCE, scanners et violations de protocoles.
-- **Rate Limiting** : Plafonne les requêtes par client IP (ex: 120 req/minute) avec bannissement temporaire en cas de dépassement (HTTP 429).
-- **Adaptive Protection** : Détection des anomalies Layer 7 par Machine Learning Google.
-- **Adresse IP externe globale** et certificat SSL managé Google (si un nom de domaine est fourni).
-
-### 3. Compute GKE (`modules/compute-gke`)
-- **Mode Autopilot** : Gestion entièrement automatisée des nœuds et du dimensionnement.
-- **Nœuds Privés** : Aucun nœud Kubernetes n'a d'adresse IP externe (`enable_private_nodes = true`).
-- **Workload Identity** : Établit un lien sécurisé entre le Service Account Kubernetes et le Google Service Account, avec les rôles `roles/aiplatform.user`, `roles/bigquery.dataEditor`, et `roles/storage.objectViewer`.
-
-### 4. Compute Cloud Run (`modules/compute-cloudrun`)
-- Alternative serverless idéale pour les prototypes rapides ou les microservices de démo.
-- Connecté au VPC via un **Serverless VPC Access Connector**, lui permettant d'accéder aux données privées et de sortir par le Cloud NAT.
-- Compte de service dédié avec permissions Vertex AI et BigQuery préconfigurées.
-
-### 5. Bastion Host (`modules/bastion`)
-- Machine virtuelle Debian 12 sans aucune adresse IP externe.
-- Connexion SSH sécurisée par tunnel IAP (`gcloud compute ssh ... --tunnel-through-iap`).
-- **OS Login** activé.
-- Préinstallé avec `kubectl`, `gke-gcloud-auth-plugin`, `tinyproxy` (port 8888), `git` et `jq`.
-
-### 6. Data & AI Foundation (`modules/data-ai-foundation`)
-- **BigQuery Lakehouse** : Dataset dédié pour le stockage analytique, l'entraînement et l'indexation de vecteurs.
-- **Cloud Storage RAG Documents** : Bucket sécurisé avec Uniform Bucket-Level Access (UBLA), versioning et règles de cycle de vie.
-- **Cloud Storage Artifacts** : Bucket pour les poids de modèles affinés, résultats d'évaluation et caches de prompts.
-
-### 7. Observabilité SRE (`modules/observability`)
-- **Résilience Schéma BigQuery** : Filtre d'exclusion strict éliminant les logs des conteneurs système (`kube-system`, `gke-gmp-system`) et les payloads hétérogènes (`jsonPayload.address`), évitant ainsi l'erreur fréquente `table_invalid_schema`.
-- **Politique d'Alerte** : Notification en cas d'augmentation anormale du taux d'erreurs HTTP 5xx.
-- **Cockpit Unifié** : Tableau de bord Cloud Monitoring visualisant en temps réel le CPU/RAM GKE, le volume d'appels Cloud Run, les requêtes bloquées par le WAF et le stockage GCS.
-
-### 8. FinOps Budget Alert (`modules/finops-budget`)
-- **Plafond Mensuel Paramétrable** : Montant cible défini par `budget_amount` (ex: 100 USD / EUR).
-- **Seuils Graduels Automatisés** : Déclenchement d'alertes à 50%, 75%, 90% et 100% de la consommation réelle, ainsi qu'à 100% de la prévision de dépenses (*forecasted spend*).
-- **Canal de Notification** : Envoi direct des alertes par email au responsable du projet.
-
-### 9. Backup & Disaster Recovery (`modules/backup-dr`)
-- **Vaults Immuables WORM (Backup and DR Service)** : Coffres-forts de sauvegarde avec verrouillage de rétention minimale (conformité réglementaire & anti-ransomware).
-  - *Vault Opérationnel* : région primaire (`europe-west1`), rétention quotidienne (7 jours).
-  - *Vault Géo-Redondant* : région DR (`europe-west4`), rétention hebdomadaire (4 semaines).
-- **Sauvegarde de l'État Applicatif (Backup for GKE)** : Sauvegarde automatisée de l'ensemble de l'état applicatif Kubernetes (Deployments, Services, Ingress, Secrets, ConfigMaps) et des volumes persistants (Persistent Volumes / CSI), garantissant un RPO de 24h et un RTO de quelques minutes.
-
----
-
-## 🔒 Conformité Argolis & Bonnes Pratiques
-
-Ce blueprint respecte scrupuleusement les contraintes de l'environnement Google Cloud Argolis :
-- **Contrainte `compute.vmExternalIpAccess`** : Aucune VM ou nœud Kubernetes ne tente d'allouer d'adresse IP externe.
-- **Administration IAP** : L'accès d'administration s'effectue exclusivement via `roles/iap.tunnelResourceAccessor` et le port 22/8888.
-- **Moindre Privilège** : Aucun compte de service n'utilise les rôles permissifs `roles/editor` ou `roles/owner`. Chaque composant dispose uniquement des rôles nécessaires à sa mission.
-- **Authentification Développeur / Argolis** : Dans un environnement Cloudtop ou multi-comptes où l'ADC local (`gcloud auth application-default`) pointe vers un compte `@google.com` bloqué par la contrainte `constraints/iam.allowedPolicyMemberDomains`, injecter le token d'accès du compte Argolis :
+- **Zéro IP publique Compute** : Aucun nœud Kubernetes, VM Bastion ou conteneur ne possède d'adresse IP externe (`constraints/compute.vmExternalIpAccess`).
+- **Trafic Egress maîtrisé** : Toutes les connexions sortantes (téléchargement de dépendances, modèles HuggingFace) transitent par Cloud NAT.
+- **Accès d'administration IAP** : L'accès SSH au bastion utilise le tunnel Identity-Aware Proxy sur la plage réseau `35.235.240.0/20`.
+- **Authentification par token temporaire** : Si vous travaillez depuis un environnement Cloudtop avec un compte `@google.com` soumis à restriction de domaine, exportez un jeton valide avant d'appliquer Terraform :
   ```bash
   export GOOGLE_OAUTH_ACCESS_TOKEN=$(gcloud auth print-access-token --account=user@votre-domaine.altostrat.com)
   terraform apply
@@ -217,20 +170,6 @@ Ce blueprint respecte scrupuleusement les contraintes de l'environnement Google 
 
 ---
 
-## 🤝 Cycle de Vie Git & Synchronisation (GTM)
+## Licence
 
-Ce dépôt est configuré pour une double publication :
-- **Dépôt de travail / individuel (`github`)** : `https://github.com/hoffmannw-hjkl/gcp-ai-foundation-blueprint` (push direct sur `main`).
-- **Dépôt officiel Google Cloud (`gtm`)** : `https://github.com/cloud-gtm/gcp-ai-foundation-blueprint`.
-
-Le script automatisé `./scripts/sync-gtm.sh` regroupe les commits par lot (~5 commits) et crée une Pull Request sur le dépôt officiel :
-
-```bash
-# Pour synchroniser manuellement à tout moment
-./scripts/sync-gtm.sh --force
-```
-
----
-
-## 📄 Licence
-Apache License 2.0. Voir [LICENSE](LICENSE) pour plus d'informations.
+Ce projet est distribué sous licence Apache 2.0. Consultez le fichier [LICENSE](LICENSE) pour plus d'informations.

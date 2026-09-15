@@ -51,7 +51,7 @@ Ce blueprint applique **Workload Identity** :
 2. Les rôles IAM stricts sont accordés au GSA :
    - `roles/aiplatform.user` (interrogation des modèles Vertex AI / Gemini)
    - `roles/bigquery.dataEditor` & `roles/bigquery.jobUser` (requêtes et embeddings Lakehouse)
-   - `roles/storage.objectViewer` (lecture des documents RAG)
+   - `roles/storage.objectUser` (lecture et écriture sur le bucket RAG pour la persistance du snapshot `corpus.json`)
    - `roles/logging.logWriter` & `roles/monitoring.metricWriter`
 3. Le compte de service Kubernetes (KSA) est relié au GSA via :
    ```hcl
