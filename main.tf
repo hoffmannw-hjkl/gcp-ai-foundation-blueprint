@@ -79,6 +79,8 @@ module "gke" {
   services_secondary_range_name = module.networking.services_secondary_range_name
   master_ipv4_cidr_block        = "172.16.254.0/28"
   deletion_protection           = false
+  dataset_id                    = module.data_ai.dataset_id
+  rag_bucket_name               = module.data_ai.rag_bucket_name
 }
 
 # 5. Compute: Serverless Cloud Run (Optional)
@@ -86,15 +88,17 @@ module "cloudrun" {
   count  = var.enable_cloudrun ? 1 : 0
   source = "./modules/compute-cloudrun"
 
-  project_id           = var.project_id
-  region               = var.region
-  service_name         = "${local.name_prefix}-service"
-  enable_vpc_connector = true
-  vpc_network_name     = module.networking.network_name
-  vpc_connector_cidr   = "10.8.0.0/28"
-  container_image      = "us-docker.pkg.dev/cloudrun/container/hello"
-  min_instance_count   = 0
-  max_instance_count   = 5
+  project_id               = var.project_id
+  region                   = var.region
+  service_name             = "${local.name_prefix}-service"
+  vpc_network_name         = module.networking.network_name
+  subnet_name              = module.networking.subnet_name
+  enable_direct_vpc_egress = true
+  dataset_id               = module.data_ai.dataset_id
+  rag_bucket_name          = module.data_ai.rag_bucket_name
+  container_image          = "us-docker.pkg.dev/cloudrun/container/hello"
+  min_instance_count       = 0
+  max_instance_count       = 5
 }
 
 # 6. Bastion Host (Argolis Compliant: Zero Public IP, IAP Access)
