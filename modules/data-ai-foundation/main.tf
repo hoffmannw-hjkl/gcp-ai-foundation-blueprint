@@ -62,11 +62,14 @@ resource "google_storage_bucket" "rag_documents" {
     enabled = true
   }
 
-  cors {
-    origin          = var.cors_allowed_origins
-    method          = ["GET", "HEAD", "PUT", "POST"]
-    response_header = ["*"]
-    max_age_seconds = 3600
+  dynamic "cors" {
+    for_each = length(var.cors_allowed_origins) > 0 ? [1] : []
+    content {
+      origin          = var.cors_allowed_origins
+      method          = ["GET", "HEAD", "PUT", "POST"]
+      response_header = ["*"]
+      max_age_seconds = 3600
+    }
   }
 
   lifecycle_rule {
@@ -103,6 +106,27 @@ resource "google_storage_bucket" "ai_artifacts" {
     }
     condition {
       age        = 30
+      with_state = "LIVE"
+    }
+  }
+
+  lifecycle_rule {
+    action {
+      type          = "SetStorageClass"
+      storage_class = "COLDLINE"
+    }
+    condition {
+      age        = 60
+      with_state = "LIVE"
+    }
+  }
+
+  lifecycle_rule {
+    action {
+      type = "Delete"
+    }
+    condition {
+      age        = 180
       with_state = "LIVE"
     }
   }

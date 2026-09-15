@@ -107,7 +107,16 @@ resource "google_project_iam_member" "aiplatform_user" {
 }
 
 # 2. BigQuery Data Editor & Job User (for vector store & analytics)
+resource "google_bigquery_dataset_iam_member" "dataset_editor" {
+  count      = var.dataset_id != "" ? 1 : 0
+  project    = var.project_id
+  dataset_id = var.dataset_id
+  role       = "roles/bigquery.dataEditor"
+  member     = "serviceAccount:${google_service_account.workload_sa.email}"
+}
+
 resource "google_project_iam_member" "bigquery_editor" {
+  count   = var.dataset_id == "" ? 1 : 0
   project = var.project_id
   role    = "roles/bigquery.dataEditor"
   member  = "serviceAccount:${google_service_account.workload_sa.email}"
@@ -120,7 +129,15 @@ resource "google_project_iam_member" "bigquery_job_user" {
 }
 
 # 3. Cloud Storage Access (RAG document embeddings & model artifacts)
+resource "google_storage_bucket_iam_member" "rag_bucket_user" {
+  count  = var.rag_bucket_name != "" ? 1 : 0
+  bucket = var.rag_bucket_name
+  role   = "roles/storage.objectUser"
+  member = "serviceAccount:${google_service_account.workload_sa.email}"
+}
+
 resource "google_project_iam_member" "storage_object_viewer" {
+  count   = var.rag_bucket_name == "" ? 1 : 0
   project = var.project_id
   role    = "roles/storage.objectViewer"
   member  = "serviceAccount:${google_service_account.workload_sa.email}"

@@ -58,9 +58,9 @@ variable "random_suffix" {
 }
 
 variable "cors_allowed_origins" {
-  description = "List of allowed origins for Cloud Storage CORS (e.g. web upload frontends)."
+  description = "List of allowed origins for Cloud Storage CORS (e.g. web upload frontends). Set to empty list by default for security."
   type        = list(string)
-  default     = ["*"]
+  default     = []
 }
 
 variable "labels" {

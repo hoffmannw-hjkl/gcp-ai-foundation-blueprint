@@ -9,10 +9,10 @@ terraform {
 }
 
 # ------------------------------------------------------------------------------
-# Serverless VPC Access Connector (Connect Cloud Run to Private VPC)
+# Serverless VPC Access (Direct VPC Egress or Legacy Connector Fallback)
 # ------------------------------------------------------------------------------
 resource "google_vpc_access_connector" "connector" {
-  count         = var.enable_vpc_connector && var.vpc_connector_id == "" ? 1 : 0
+  count         = var.enable_vpc_connector && !var.enable_direct_vpc_egress && var.vpc_connector_id == "" ? 1 : 0
   name          = "${substr(var.service_name, 0, 18)}-vpc-cx"
   project       = var.project_id
   region        = var.region
@@ -24,8 +24,9 @@ resource "google_vpc_access_connector" "connector" {
 }
 
 locals {
-  effective_connector_id = var.enable_vpc_connector ? (
-    var.vpc_connector_id != "" ? var.vpc_connector_id : google_vpc_access_connector.connector[0].id
+  use_direct_vpc = var.enable_direct_vpc_egress && var.vpc_network_name != "" && var.subnet_name != ""
+  effective_connector_id = !local.use_direct_vpc && var.enable_vpc_connector ? (
+    var.vpc_connector_id != "" ? var.vpc_connector_id : (length(google_vpc_access_connector.connector) > 0 ? google_vpc_access_connector.connector[0].id : null)
   ) : null
 }
 
@@ -39,7 +40,7 @@ resource "google_service_account" "cloudrun_sa" {
 }
 
 # ------------------------------------------------------------------------------
-# IAM Bindings for AI Services & Observability
+# IAM Bindings for AI Services & Observability (Least Privilege)
 # ------------------------------------------------------------------------------
 resource "google_project_iam_member" "aiplatform_user" {
   project = var.project_id
@@ -47,7 +48,17 @@ resource "google_project_iam_member" "aiplatform_user" {
   member  = "serviceAccount:${google_service_account.cloudrun_sa.email}"
 }
 
+# BigQuery: scoped to dataset when provided, otherwise project fallback
+resource "google_bigquery_dataset_iam_member" "dataset_editor" {
+  count      = var.dataset_id != "" ? 1 : 0
+  project    = var.project_id
+  dataset_id = var.dataset_id
+  role       = "roles/bigquery.dataEditor"
+  member     = "serviceAccount:${google_service_account.cloudrun_sa.email}"
+}
+
 resource "google_project_iam_member" "bigquery_editor" {
+  count   = var.dataset_id == "" ? 1 : 0
   project = var.project_id
   role    = "roles/bigquery.dataEditor"
   member  = "serviceAccount:${google_service_account.cloudrun_sa.email}"
@@ -59,7 +70,16 @@ resource "google_project_iam_member" "bigquery_job_user" {
   member  = "serviceAccount:${google_service_account.cloudrun_sa.email}"
 }
 
+# Cloud Storage: scoped to RAG bucket (objectUser: read + write) when provided
+resource "google_storage_bucket_iam_member" "rag_bucket_user" {
+  count  = var.rag_bucket_name != "" ? 1 : 0
+  bucket = var.rag_bucket_name
+  role   = "roles/storage.objectUser"
+  member = "serviceAccount:${google_service_account.cloudrun_sa.email}"
+}
+
 resource "google_project_iam_member" "storage_viewer" {
+  count   = var.rag_bucket_name == "" ? 1 : 0
   project = var.project_id
   role    = "roles/storage.objectViewer"
   member  = "serviceAccount:${google_service_account.cloudrun_sa.email}"
@@ -89,10 +109,17 @@ resource "google_cloud_run_v2_service" "service" {
     }
 
     dynamic "vpc_access" {
-      for_each = local.effective_connector_id != null ? [1] : []
+      for_each = local.use_direct_vpc ? [1] : (local.effective_connector_id != null ? [1] : [])
       content {
-        connector = local.effective_connector_id
-        egress    = "ALL_TRAFFIC"
+        dynamic "network_interfaces" {
+          for_each = local.use_direct_vpc ? [1] : []
+          content {
+            network    = var.vpc_network_name
+            subnetwork = var.subnet_name
+          }
+        }
+        connector = local.use_direct_vpc ? null : local.effective_connector_id
+        egress    = var.vpc_egress
       }
     }
 

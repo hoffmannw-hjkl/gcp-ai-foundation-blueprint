@@ -69,26 +69,56 @@ variable "env_vars" {
   default     = {}
 }
 
-variable "enable_vpc_connector" {
-  description = "Connect Cloud Run to the private VPC via Serverless VPC Access."
+variable "enable_direct_vpc_egress" {
+  description = "Use Cloud Run v2 Direct VPC Egress instead of legacy Serverless VPC Access connector."
   type        = bool
   default     = true
 }
 
+variable "enable_vpc_connector" {
+  description = "Legacy Serverless VPC Access connector (fallback if direct VPC egress is false)."
+  type        = bool
+  default     = false
+}
+
 variable "vpc_network_name" {
-  description = "Name of the VPC network to connect to (required if enable_vpc_connector is true and vpc_connector_id is empty)."
+  description = "Name of the VPC network to connect to."
   type        = string
   default     = ""
 }
 
+variable "subnet_name" {
+  description = "Subnet name for Direct VPC Egress."
+  type        = string
+  default     = ""
+}
+
+variable "vpc_egress" {
+  description = "VPC Egress mode for Cloud Run: ALL_TRAFFIC or PRIVATE_RANGES_ONLY."
+  type        = string
+  default     = "ALL_TRAFFIC"
+}
+
 variable "vpc_connector_cidr" {
-  description = "A dedicated /28 CIDR range for the Serverless VPC Access connector (e.g. 10.8.0.0/28)."
+  description = "A dedicated /28 CIDR range for legacy Serverless VPC Access connector."
   type        = string
   default     = "10.8.0.0/28"
 }
 
 variable "vpc_connector_id" {
-  description = "Optional existing VPC connector ID. If empty and enable_vpc_connector is true, a new one is created."
+  description = "Optional existing VPC connector ID."
+  type        = string
+  default     = ""
+}
+
+variable "rag_bucket_name" {
+  description = "Optional name of the RAG documents bucket to restrict IAM permissions."
+  type        = string
+  default     = ""
+}
+
+variable "dataset_id" {
+  description = "Optional BigQuery dataset ID to restrict IAM dataEditor role."
   type        = string
   default     = ""
 }
