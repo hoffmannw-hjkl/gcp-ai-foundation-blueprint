@@ -26,6 +26,8 @@ Ce blueprint résout ce problème en offrant :
 
 ## 🏗️ Architecture Globale
 
+> 📐 **Schéma interactif GCP Draw** : Le schéma officiel au format GCP Draw (`go/gcpdraw`) est disponible dans [docs/architecture-gcpdraw.md](docs/architecture-gcpdraw.md).
+
 ```mermaid
 flowchart TD
     subgraph Internet_Edge ["1. Edge & Sécurité Périmétrique"]
