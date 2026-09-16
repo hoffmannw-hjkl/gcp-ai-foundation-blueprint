@@ -8,6 +8,10 @@ terraform {
   }
 }
 
+data "google_project" "project" {
+  project_id = var.project_id
+}
+
 # ------------------------------------------------------------------------------
 # Monitoring Notification Channels for Budget Alerts
 # ------------------------------------------------------------------------------
@@ -29,9 +33,10 @@ resource "google_billing_budget" "budget" {
   display_name    = var.display_name
 
   budget_filter {
-    projects               = ["projects/${var.project_id}"]
+    projects               = ["projects/${data.google_project.project.number}"]
     credit_types_treatment = "INCLUDE_ALL_CREDITS"
   }
+
 
   amount {
     specified_amount {
