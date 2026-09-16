@@ -34,7 +34,7 @@ locals {
 # Dedicated Service Account for Cloud Run AI Service
 # ------------------------------------------------------------------------------
 resource "google_service_account" "cloudrun_sa" {
-  account_id   = "${substr(var.service_name, 0, 24)}-sa"
+  account_id   = "${trim(substr(var.service_name, 0, 24), "-")}-sa"
   display_name = "Service Account for Cloud Run ${var.service_name}"
   project      = var.project_id
 }
@@ -70,7 +70,7 @@ resource "google_project_iam_member" "bigquery_job_user" {
   member  = "serviceAccount:${google_service_account.cloudrun_sa.email}"
 }
 
-# Cloud Storage: scoped to RAG bucket (objectUser: read + write) when provided
+# Cloud Storage: scoped to RAG and Artifacts buckets (objectUser: read + write) when provided
 resource "google_storage_bucket_iam_member" "rag_bucket_user" {
   count  = var.rag_bucket_name != "" ? 1 : 0
   bucket = var.rag_bucket_name
@@ -78,8 +78,15 @@ resource "google_storage_bucket_iam_member" "rag_bucket_user" {
   member = "serviceAccount:${google_service_account.cloudrun_sa.email}"
 }
 
+resource "google_storage_bucket_iam_member" "artifacts_bucket_user" {
+  count  = var.artifacts_bucket_name != "" ? 1 : 0
+  bucket = var.artifacts_bucket_name
+  role   = "roles/storage.objectUser"
+  member = "serviceAccount:${google_service_account.cloudrun_sa.email}"
+}
+
 resource "google_project_iam_member" "storage_viewer" {
-  count   = var.rag_bucket_name == "" ? 1 : 0
+  count   = var.rag_bucket_name == "" && var.artifacts_bucket_name == "" ? 1 : 0
   project = var.project_id
   role    = "roles/storage.objectViewer"
   member  = "serviceAccount:${google_service_account.cloudrun_sa.email}"
@@ -95,10 +102,12 @@ resource "google_project_iam_member" "log_writer" {
 # Cloud Run v2 Service
 # ------------------------------------------------------------------------------
 resource "google_cloud_run_v2_service" "service" {
-  name     = var.service_name
-  location = var.region
-  project  = var.project_id
-  ingress  = var.ingress_settings
+  name                = var.service_name
+  location            = var.region
+  project             = var.project_id
+  ingress             = var.ingress_settings
+  deletion_protection = var.deletion_protection
+
 
   template {
     service_account = google_service_account.cloudrun_sa.email

@@ -117,8 +117,21 @@ variable "rag_bucket_name" {
   default     = ""
 }
 
+variable "artifacts_bucket_name" {
+  description = "Optional name of the AI artifacts bucket to restrict IAM permissions."
+  type        = string
+  default     = ""
+}
+
 variable "dataset_id" {
   description = "Optional BigQuery dataset ID to restrict IAM dataEditor role."
   type        = string
   default     = ""
 }
+
+variable "deletion_protection" {
+  description = "Whether to enable deletion protection on the Cloud Run service."
+  type        = bool
+  default     = false
+}
+

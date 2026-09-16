@@ -20,10 +20,11 @@ data "google_compute_image" "debian_12" {
 # Dedicated Service Account for Bastion VM
 # ------------------------------------------------------------------------------
 resource "google_service_account" "bastion_sa" {
-  account_id   = "${substr(var.bastion_name, 0, 24)}-sa"
+  account_id   = "${trim(substr(var.bastion_name, 0, 24), "-")}-sa"
   display_name = "Service Account for IAP Bastion Host"
   project      = var.project_id
 }
+
 
 # ------------------------------------------------------------------------------
 # Least-Privilege IAM Roles for Bastion

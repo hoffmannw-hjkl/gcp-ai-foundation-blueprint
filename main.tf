@@ -45,6 +45,7 @@ module "security_waf" {
   enable_adaptive_protection = true
   enable_owasp_rules         = true
   enable_rate_limiting       = true
+  excluded_upload_paths      = var.excluded_upload_paths
   create_external_ip         = true
   ip_name                    = "${local.name_prefix}-global-ip"
   domain_name                = var.domain_name
@@ -56,13 +57,16 @@ module "security_waf" {
 module "data_ai" {
   source = "./modules/data-ai-foundation"
 
-  project_id            = var.project_id
-  region                = var.region
-  dataset_id            = "${replace(local.name_prefix, "-", "_")}_lakehouse"
-  dataset_friendly_name = "AI Lakehouse (${local.name_prefix})"
-  rag_bucket_name       = "${var.project_id}-${local.name_prefix}-rag-docs"
-  artifacts_bucket_name = "${var.project_id}-${local.name_prefix}-artifacts"
-  labels                = var.labels
+  project_id                 = var.project_id
+  region                     = var.region
+  dataset_id                 = "${replace(local.name_prefix, "-", "_")}_lakehouse"
+  dataset_friendly_name      = "AI Lakehouse (${local.name_prefix})"
+  delete_contents_on_destroy = var.force_destroy
+  rag_bucket_name            = "${var.project_id}-${local.name_prefix}-rag-docs"
+  artifacts_bucket_name      = "${var.project_id}-${local.name_prefix}-artifacts"
+  force_destroy              = var.force_destroy
+  kms_key_name               = var.kms_key_name
+  labels                     = var.labels
 }
 
 # 4. Compute: Private GKE Autopilot (Optional)
@@ -78,9 +82,11 @@ module "gke" {
   pods_secondary_range_name     = module.networking.pods_secondary_range_name
   services_secondary_range_name = module.networking.services_secondary_range_name
   master_ipv4_cidr_block        = "172.16.254.0/28"
-  deletion_protection           = false
+  deletion_protection           = var.deletion_protection
+  enable_gke_backup             = var.enable_backup_dr
   dataset_id                    = module.data_ai.dataset_id
   rag_bucket_name               = module.data_ai.rag_bucket_name
+  artifacts_bucket_name         = module.data_ai.artifacts_bucket_name
 }
 
 # 5. Compute: Serverless Cloud Run (Optional)
@@ -94,8 +100,10 @@ module "cloudrun" {
   vpc_network_name         = module.networking.network_name
   subnet_name              = module.networking.subnet_name
   enable_direct_vpc_egress = true
+  deletion_protection      = var.deletion_protection
   dataset_id               = module.data_ai.dataset_id
   rag_bucket_name          = module.data_ai.rag_bucket_name
+  artifacts_bucket_name    = module.data_ai.artifacts_bucket_name
   container_image          = "us-docker.pkg.dev/cloudrun/container/hello"
   min_instance_count       = 0
   max_instance_count       = 5
@@ -124,10 +132,12 @@ module "observability" {
   sink_name              = "${local.name_prefix}-log-sink"
   create_log_dataset     = true
   log_dataset_name       = "${replace(local.name_prefix, "-", "_")}_logs"
+  force_destroy          = var.force_destroy
   alert_email_address    = var.alert_email
   enable_dashboard       = true
   dashboard_display_name = "🤖 AI Foundation (${local.name_prefix}) - Cockpit Observabilité"
 }
+
 
 # 8. FinOps: Cloud Billing Budget Alert (Optional)
 module "finops_budget" {

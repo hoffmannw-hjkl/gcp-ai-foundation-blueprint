@@ -92,3 +92,10 @@ variable "admin_email" {
   type        = string
   default     = ""
 }
+
+variable "excluded_upload_paths" {
+  description = "List of URL path prefixes excluded from OWASP body inspection to prevent false positives on PDF/document uploads."
+  type        = list(string)
+  default     = ["/api/documents/upload"]
+}
+

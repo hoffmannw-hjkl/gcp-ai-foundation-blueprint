@@ -8,6 +8,10 @@ terraform {
   }
 }
 
+locals {
+  upload_path_exclusion = length(var.excluded_upload_paths) > 0 ? "!(${join(" || ", [for p in var.excluded_upload_paths : "request.path.startsWith('${p}')"])}) && " : ""
+}
+
 # ------------------------------------------------------------------------------
 # Cloud Armor Security Policy (WAF & DDoS Mitigation)
 # ------------------------------------------------------------------------------
@@ -63,14 +67,14 @@ resource "google_compute_security_policy" "waf_policy" {
   # ----------------------------------------------------------------------------
   dynamic "rule" {
     for_each = var.enable_owasp_rules ? [
-      { priority = "2000", expr = "evaluatePreconfiguredExpr('sqli-v33-stable', ['owasp-crs-v030301-id942420-sqli', 'owasp-crs-v030301-id942421-sqli', 'owasp-crs-v030301-id942430-sqli', 'owasp-crs-v030301-id942431-sqli', 'owasp-crs-v030301-id942432-sqli'])", desc = "OWASP CRS: SQL Injection protection", preview = var.preview_mode },
-      { priority = "2001", expr = "evaluatePreconfiguredExpr('xss-v33-stable')", desc = "OWASP CRS: Cross-Site Scripting (XSS) protection", preview = var.preview_mode },
-      { priority = "2002", expr = "evaluatePreconfiguredExpr('lfi-v33-stable')", desc = "OWASP CRS: Local File Inclusion (LFI) protection", preview = var.preview_mode },
-      { priority = "2003", expr = "evaluatePreconfiguredExpr('rfi-v33-stable')", desc = "OWASP CRS: Remote File Inclusion (RFI) protection", preview = var.preview_mode },
-      { priority = "2004", expr = "evaluatePreconfiguredExpr('rce-v33-stable')", desc = "OWASP CRS: Remote Code Execution (RCE) protection", preview = var.preview_mode },
-      { priority = "2005", expr = "evaluatePreconfiguredExpr('protocolattack-v33-stable')", desc = "OWASP CRS: Protocol Attack protection", preview = var.preview_mode },
-      { priority = "2006", expr = "evaluatePreconfiguredExpr('scannerdetection-v33-stable')", desc = "OWASP CRS: Security Scanner Detection", preview = var.preview_mode },
-      { priority = "2007", expr = "evaluatePreconfiguredExpr('sessionfixation-v33-stable')", desc = "OWASP CRS: Session Fixation protection", preview = var.preview_mode }
+      { priority = "2000", expr = "${local.upload_path_exclusion}evaluatePreconfiguredExpr('sqli-v33-stable', ['owasp-crs-v030301-id942420-sqli', 'owasp-crs-v030301-id942421-sqli', 'owasp-crs-v030301-id942430-sqli', 'owasp-crs-v030301-id942431-sqli', 'owasp-crs-v030301-id942432-sqli'])", desc = "OWASP CRS: SQL Injection protection", preview = true },
+      { priority = "2001", expr = "${local.upload_path_exclusion}evaluatePreconfiguredExpr('xss-v33-stable')", desc = "OWASP CRS: Cross-Site Scripting (XSS) protection", preview = true },
+      { priority = "2002", expr = "${local.upload_path_exclusion}evaluatePreconfiguredExpr('lfi-v33-stable')", desc = "OWASP CRS: Local File Inclusion (LFI) protection", preview = var.preview_mode },
+      { priority = "2003", expr = "${local.upload_path_exclusion}evaluatePreconfiguredExpr('rfi-v33-stable')", desc = "OWASP CRS: Remote File Inclusion (RFI) protection", preview = var.preview_mode },
+      { priority = "2004", expr = "${local.upload_path_exclusion}evaluatePreconfiguredExpr('rce-v33-stable')", desc = "OWASP CRS: Remote Code Execution (RCE) protection", preview = var.preview_mode },
+      { priority = "2005", expr = "${local.upload_path_exclusion}evaluatePreconfiguredExpr('protocolattack-v33-stable')", desc = "OWASP CRS: Protocol Attack protection", preview = var.preview_mode },
+      { priority = "2006", expr = "${local.upload_path_exclusion}evaluatePreconfiguredExpr('scannerdetection-v33-stable')", desc = "OWASP CRS: Security Scanner Detection", preview = var.preview_mode },
+      { priority = "2007", expr = "${local.upload_path_exclusion}evaluatePreconfiguredExpr('sessionfixation-v33-stable')", desc = "OWASP CRS: Session Fixation protection", preview = var.preview_mode }
     ] : []
 
     content {
@@ -167,9 +171,10 @@ resource "google_compute_managed_ssl_certificate" "ssl_cert" {
 # ------------------------------------------------------------------------------
 # IAM Binding for Zero Trust IAP Web App Access (Optional)
 # ------------------------------------------------------------------------------
-resource "google_project_iam_member" "iap_accessor" {
+resource "google_iap_web_iam_member" "iap_accessor" {
   count   = var.admin_email != "" ? 1 : 0
   project = var.project_id
   role    = "roles/iap.httpsResourceAccessor"
   member  = "user:${var.admin_email}"
 }
+
