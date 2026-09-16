@@ -59,38 +59,10 @@ resource "google_container_cluster" "cluster" {
 }
 
 # ------------------------------------------------------------------------------
-# GKE Backup Plan (Optional)
-# ------------------------------------------------------------------------------
-resource "google_gke_backup_backup_plan" "daily_backup" {
-  count    = var.enable_gke_backup ? 1 : 0
-  name     = "${var.cluster_name}-daily-backup"
-  cluster  = google_container_cluster.cluster.id
-  location = var.region
-  project  = var.project_id
-
-  retention_policy {
-    backup_retain_days      = 30
-    backup_delete_lock_days = 0
-  }
-
-  backup_schedule {
-    cron_schedule = "0 3 * * *"
-  }
-
-  backup_config {
-    include_volume_data = true
-    include_secrets     = true
-    all_namespaces      = true
-  }
-
-  depends_on = [google_container_cluster.cluster]
-}
-
-# ------------------------------------------------------------------------------
 # Dedicated Google Service Account for AI Workloads on GKE
 # ------------------------------------------------------------------------------
 resource "google_service_account" "workload_sa" {
-  account_id   = "${var.cluster_name}-ai-sa"
+  account_id   = "${trim(substr(var.cluster_name, 0, 21), "-")}-ai-sa"
   display_name = "Workload Identity SA for AI Applications on GKE"
   project      = var.project_id
 }
@@ -136,12 +108,20 @@ resource "google_storage_bucket_iam_member" "rag_bucket_user" {
   member = "serviceAccount:${google_service_account.workload_sa.email}"
 }
 
+resource "google_storage_bucket_iam_member" "artifacts_bucket_user" {
+  count  = var.artifacts_bucket_name != "" ? 1 : 0
+  bucket = var.artifacts_bucket_name
+  role   = "roles/storage.objectUser"
+  member = "serviceAccount:${google_service_account.workload_sa.email}"
+}
+
 resource "google_project_iam_member" "storage_object_viewer" {
-  count   = var.rag_bucket_name == "" ? 1 : 0
+  count   = var.rag_bucket_name == "" && var.artifacts_bucket_name == "" ? 1 : 0
   project = var.project_id
   role    = "roles/storage.objectViewer"
   member  = "serviceAccount:${google_service_account.workload_sa.email}"
 }
+
 
 # 4. Observability: Cloud Logging & Monitoring
 resource "google_project_iam_member" "log_writer" {

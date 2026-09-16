@@ -1,12 +1,22 @@
 variable "project_id" {
   description = "The Google Cloud project ID."
   type        = string
+
+  validation {
+    condition     = can(regex("^[a-z][a-z0-9-]{4,28}[a-z0-9]$", var.project_id))
+    error_message = "The project_id must be a valid GCP project ID (6-30 lowercase letters, digits, or hyphens)."
+  }
 }
 
 variable "region" {
   description = "Primary GCP region for resources."
   type        = string
   default     = "europe-west1"
+
+  validation {
+    condition     = can(regex("^[a-z]+-[a-z]+[0-9]$", var.region))
+    error_message = "The region must be a valid GCP region identifier (e.g. europe-west1, us-central1)."
+  }
 }
 
 variable "zone" {
@@ -31,6 +41,11 @@ variable "random_suffix_length" {
   description = "Length of the random suffix (e.g. 4 for 'a8f2')."
   type        = number
   default     = 4
+
+  validation {
+    condition     = var.random_suffix_length >= 2 && var.random_suffix_length <= 8
+    error_message = "The random_suffix_length must be between 2 and 8 characters."
+  }
 }
 
 variable "enable_gke" {
@@ -40,7 +55,7 @@ variable "enable_gke" {
 }
 
 variable "enable_cloudrun" {
-  description = "Provision baseline Cloud Run service with Serverless VPC access."
+  description = "Provision baseline Cloud Run service with Direct VPC Egress."
   type        = bool
   default     = false
 }
@@ -55,6 +70,12 @@ variable "enable_waf" {
   description = "Provision Cloud Armor WAF policy (OWASP Top 10 + Rate Limiting)."
   type        = bool
   default     = true
+}
+
+variable "excluded_upload_paths" {
+  description = "List of URL path prefixes excluded from Cloud Armor OWASP body inspection to prevent false positives on document/PDF uploads."
+  type        = list(string)
+  default     = ["/api/documents/upload"]
 }
 
 variable "enable_observability" {
@@ -101,6 +122,11 @@ variable "budget_amount" {
   description = "Monthly budget limit for the project (e.g. 100 for $100 demo budget)."
   type        = number
   default     = 100
+
+  validation {
+    condition     = var.budget_amount > 0
+    error_message = "The budget_amount must be strictly greater than 0."
+  }
 }
 
 variable "budget_currency" {
@@ -125,12 +151,22 @@ variable "backup_daily_retention_days" {
   description = "Retention duration for daily operational backup vault (in days)."
   type        = number
   default     = 7
+
+  validation {
+    condition     = var.backup_daily_retention_days >= 1
+    error_message = "Daily backup retention must be at least 1 day."
+  }
 }
 
 variable "backup_weekly_retention_weeks" {
   description = "Retention duration for weekly geo-redundant DR backup vault (in weeks)."
   type        = number
   default     = 4
+
+  validation {
+    condition     = var.backup_weekly_retention_weeks >= 1
+    error_message = "Weekly backup retention must be at least 1 week."
+  }
 }
 
 variable "enable_geo_dr_vault" {
@@ -138,4 +174,23 @@ variable "enable_geo_dr_vault" {
   type        = bool
   default     = true
 }
+
+variable "deletion_protection" {
+  description = "Enable deletion protection on stateful compute and data resources (recommended false for demos/sandboxes, true for production)."
+  type        = bool
+  default     = false
+}
+
+variable "force_destroy" {
+  description = "Allow deleting Cloud Storage buckets and BigQuery datasets containing data during terraform destroy (recommended true for demos/sandboxes, false for production)."
+  type        = bool
+  default     = false
+}
+
+variable "kms_key_name" {
+  description = "Optional Cloud KMS CryptoKey ID (CMEK) for customer-managed encryption on BigQuery datasets and Cloud Storage buckets."
+  type        = string
+  default     = ""
+}
+
 

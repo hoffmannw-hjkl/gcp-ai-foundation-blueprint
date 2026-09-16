@@ -19,7 +19,7 @@ resource "google_bigquery_dataset" "logs" {
   location                    = var.region
   project                     = var.project_id
   default_table_expiration_ms = 7776000000 # 90 days log retention
-  delete_contents_on_destroy  = false
+  delete_contents_on_destroy  = var.force_destroy
 
   labels = {
     tier = "observability"
@@ -47,13 +47,15 @@ resource "google_logging_project_sink" "bq_sink" {
   }
 }
 
-# Grant BigQuery Data Editor to the sink's service account
-resource "google_project_iam_member" "sink_writer" {
-  count   = var.enable_log_sink ? 1 : 0
-  project = var.project_id
-  role    = "roles/bigquery.dataEditor"
-  member  = google_logging_project_sink.bq_sink[0].writer_identity
+# Grant BigQuery Data Editor to the sink's service account strictly on the log dataset
+resource "google_bigquery_dataset_iam_member" "sink_writer" {
+  count      = var.enable_log_sink && local.effective_dataset_id != "" ? 1 : 0
+  project    = var.project_id
+  dataset_id = local.effective_dataset_id
+  role       = "roles/bigquery.dataEditor"
+  member     = google_logging_project_sink.bq_sink[0].writer_identity
 }
+
 
 # ------------------------------------------------------------------------------
 # Cloud Monitoring: Notification Channel & Alert Policy

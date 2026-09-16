@@ -75,42 +75,74 @@ The blueprint consists of 9 decoupled, composable Terraform modules:
 
 ---
 
-## Root Configuration Variables
+## Turnkey Architecture Profiles (Reusability)
 
-The root module (`main.tf`) exposes the following primary parameters:
+To streamline reuse across different environments (rapid demonstrations vs sovereign enterprise production), [`terraform.tfvars.example`](file:///usr/local/google/home/hoffmannw/gcp-ai-foundation-blueprint/terraform.tfvars.example) provides two pre-configured profiles:
 
-| Variable | Type | Default | Description |
+| Profile | Target Use Case | Compute & Security Configuration | Provisioning Time & Cost |
 | :--- | :--- | :--- | :--- |
-| `project_id` | String | *Required* | Target Google Cloud project identifier. |
-| `region` | String | `europe-west1` | Primary region for resource provisioning. |
-| `resource_prefix` | String | `ai-demo` | Prefix applied to all provisioned GCP resources. |
-| `enable_gke` | Boolean | `true` | Enables or disables the private GKE Autopilot cluster. |
-| `enable_cloudrun` | Boolean | `true` | Enables or disables the Cloud Run v2 service. |
-| `enable_waf` | Boolean | `true` | Enables Cloud Armor WAF security policy and external Load Balancer. |
-| `enable_bastion` | Boolean | `true` | Provisions the private IAP administrative bastion VM. |
-| `enable_observability` | Boolean | `true` | Creates the BigQuery logging sink and Cloud Monitoring dashboard. |
-| `billing_account` | String | `""` | Billing account ID (required when `enable_finops_budget` is active). |
-| `budget_amount` | Number | `100` | Target monthly spend cap in project currency. |
+| **Profile A: Lightweight Serverless Demo** | Fast demos (`app-rag-comparison`), agile PoCs, ephemeral sandboxes. | `enable_cloudrun = true`, `enable_gke = false`, `enable_bastion = false`, `enable_waf = false`, `force_destroy = true`. | **~2 min** / Near-zero idle cost (*scale-to-zero*). |
+| **Profile B: Sovereign Enterprise Production** | Enterprise workloads (`app-civiclens`), sensitive data, SecOps/DORA compliance. | `enable_gke = true`, `enable_waf = true`, `enable_bastion = true`, `enable_backup_dr = true`, `deletion_protection = true`. | **~15 min** / Multi-zone HA & WORM retention. |
 
 ---
 
-## Root Outputs
+## Root Configuration Variables (`variables.tf`)
 
-Outputs exported by the root module facilitate direct integration with client applications:
+The root module exposes 27 strongly typed and validated variables (`validation {}`):
 
-| Output | Description |
+| Variable | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `project_id` | `string` | *Required* | Target Google Cloud project identifier (regex validated). |
+| `region` | `string` | `"europe-west1"` | Primary GCP region for networking, compute, and data resources. |
+| `zone` | `string` | `"europe-west1-b"` | Primary GCP zone for the Bastion VM. |
+| `resource_prefix` | `string` | `"ai-base"` | Naming prefix applied to all provisioned GCP resources. |
+| `enable_random_suffix` | `bool` | `true` | Appends a collision-resistant random suffix to resources and GCS buckets. |
+| `random_suffix_length` | `number` | `4` | Length of the random suffix (between 2 and 8 characters). |
+| `enable_gke` | `bool` | `true` | Provisions the private GKE Autopilot cluster. |
+| `enable_cloudrun` | `bool` | `false` | Provisions the serverless Cloud Run v2 service with Direct VPC Egress. |
+| `enable_bastion` | `bool` | `true` | Provisions the private IAP administrative bastion VM. |
+| `enable_waf` | `bool` | `true` | Provisions the Cloud Armor WAF policy (OWASP Top 10 + Rate Limiting). |
+| `excluded_upload_paths` | `list(string)` | `["/api/documents/upload"]` | URL path prefixes excluded from OWASP body inspection (prevents HTTP 403 false positives during PDF/document uploads). |
+| `domain_name` | `string` | `""` | Custom domain name for Google-managed SSL certificate (leave empty to skip). |
+| `admin_email` | `string` | `""` | Administrator email granted Zero-Trust IAP access (`roles/iap.httpsResourceAccessor`). |
+| `enable_observability` | `bool` | `true` | Creates the Cloud Logging BigQuery sink and Cloud Monitoring dashboard. |
+| `alert_email` | `string` | `""` | Recipient email address for SRE Cloud Monitoring and FinOps budget alerts. |
+| `billing_account` | `string` | `""` | Cloud Billing account ID (enables automated monthly budget alerts). |
+| `budget_amount` | `number` | `100` | Target monthly spend cap in project currency (must be > 0). |
+| `budget_currency` | `string` | `"USD"` | Currency code for budget alerts (`USD`, `EUR`, etc.). |
+| `enable_backup_dr` | `bool` | `false` | Enables the Backup & DR module (WORM vaults and GKE workload backups). |
+| `dr_region` | `string` | `"europe-west4"` | Secondary GCP region for geo-redundant DR vaults. |
+| `backup_daily_retention_days` | `number` | `7` | Retention duration for daily operational backups (in days). |
+| `backup_weekly_retention_weeks` | `number` | `4` | Retention duration for weekly geo-redundant DR backups (in weeks). |
+| `enable_geo_dr_vault` | `bool` | `true` | Provisions the secondary cross-region backup vault in `dr_region`. |
+| `deletion_protection` | `bool` | `false` | Enables deletion protection on GKE and Cloud Run. Set `true` in production. |
+| `force_destroy` | `bool` | `false` | Allows deleting non-empty GCS buckets and BigQuery datasets during `terraform destroy` (useful for demo teardowns). |
+| `kms_key_name` | `string` | `""` | Optional Cloud KMS CryptoKey ID (CMEK) for customer-managed encryption on BigQuery and GCS. |
+| `labels` | `map(string)` | `{...}` | FinOps labels applied uniformly to all resources via `default_labels`. |
+
+---
+
+## Plug-and-Play Outputs (`outputs.tf`)
+
+Outputs are designed to be injected directly into downstream application deployment scripts (`terraform output -raw <name>`) without manual string parsing:
+
+| Output | Description & Downstream Usage |
 | :--- | :--- |
-| `vpc_network_name` | Name of the provisioned private VPC (`{prefix}-vpc`). |
-| `subnet_id` | Primary subnet resource ID (`{prefix}-subnet`). |
-| `external_ip` | Reserved global static IP address for the HTTPS Load Balancer. |
-| `waf_policy_id` | Cloud Armor security policy resource ID. |
-| `lakehouse_dataset_id` | BigQuery AI Lakehouse dataset ID. |
-| `rag_bucket_name` | Cloud Storage bucket name for RAG persistence (`{project_id}-{prefix}-rag-docs`). |
-| `rag_bucket_url` | Cloud Storage bucket `gs://` URL for RAG documents. |
-| `gke_cluster_name` | GKE Autopilot cluster name. |
+| `vpc_network_name` / `subnet_name` | Short names of the VPC and subnet (for `--network` and `--subnet` with Cloud Run Direct VPC Egress). |
+| `external_ip` / `external_ip_name` | External IPv4 address and its resource name (for Kubernetes `ingress.global-static-ip-name` annotation). |
+| `waf_policy_id` / `waf_policy_name` | Full URI and short name of the Cloud Armor WAF policy (for GKE `BackendConfig`). |
+| `ssl_certificate_name` | Managed SSL certificate name (for Kubernetes `ingress.gcp.kubernetes.io/pre-shared-cert` annotation). |
+| `lakehouse_dataset_id` | BigQuery AI Lakehouse dataset ID (`{prefix}_lakehouse`). |
+| `rag_bucket_name` / `rag_bucket_url` | Name and `gs://` URL of the Cloud Storage bucket for RAG documents. |
+| `artifacts_bucket_name` / `artifacts_bucket_url` | Name and `gs://` URL of the Cloud Storage bucket for AI artifacts and model caches. |
+| `gke_cluster_name` / `gke_cluster_endpoint` | Name and private endpoint of the GKE Autopilot cluster. |
+| `gke_get_credentials_command` | Ready-to-run `gcloud container clusters get-credentials ... --internal-ip` command. |
 | `gke_app_service_account_email` | Google Service Account email configured for GKE Workload Identity. |
-| `cloudrun_service_uri` | HTTPS endpoint URI for the Cloud Run v2 service. |
-| `bastion_ssh_command` | gcloud CLI command to initiate an authenticated IAP SSH session to the bastion. |
+| `workload_identity_pool` | Project Workload Identity Pool (`{project_id}.svc.id.goog`). |
+| `cloudrun_service_name` / `cloudrun_service_uri` | Name and HTTPS endpoint URI for the Cloud Run v2 service. |
+| `cloudrun_service_account_email` | Dedicated Service Account email for the Cloud Run service. |
+| `bastion_ssh_command` | `gcloud compute ssh ... --tunnel-through-iap` command to connect to the private bastion. |
+
 
 ---
 

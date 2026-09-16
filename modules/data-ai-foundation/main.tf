@@ -37,6 +37,13 @@ resource "google_bigquery_dataset" "ai_dataset" {
   default_table_expiration_ms = var.default_table_expiration_ms
   delete_contents_on_destroy  = var.delete_contents_on_destroy
 
+  dynamic "default_encryption_configuration" {
+    for_each = var.kms_key_name != "" ? [1] : []
+    content {
+      kms_key_name = var.kms_key_name
+    }
+  }
+
   labels = var.labels
 
   depends_on = [google_project_service.bigquery]
@@ -57,6 +64,15 @@ resource "google_storage_bucket" "rag_documents" {
   location                    = var.region
   storage_class               = "STANDARD"
   uniform_bucket_level_access = true
+  public_access_prevention    = "enforced"
+  force_destroy               = var.force_destroy
+
+  dynamic "encryption" {
+    for_each = var.kms_key_name != "" ? [1] : []
+    content {
+      default_kms_key_name = var.kms_key_name
+    }
+  }
 
   versioning {
     enabled = true
@@ -94,6 +110,15 @@ resource "google_storage_bucket" "ai_artifacts" {
   location                    = var.region
   storage_class               = "STANDARD"
   uniform_bucket_level_access = true
+  public_access_prevention    = "enforced"
+  force_destroy               = var.force_destroy
+
+  dynamic "encryption" {
+    for_each = var.kms_key_name != "" ? [1] : []
+    content {
+      default_kms_key_name = var.kms_key_name
+    }
+  }
 
   versioning {
     enabled = true
@@ -133,3 +158,4 @@ resource "google_storage_bucket" "ai_artifacts" {
 
   labels = var.labels
 }
+

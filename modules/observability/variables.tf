@@ -62,3 +62,10 @@ variable "dashboard_display_name" {
   type        = string
   default     = "🤖 AI Foundation - Cockpit Observabilité & FinOps"
 }
+
+variable "force_destroy" {
+  description = "Whether to delete dataset contents on destroy (useful for demo teardown)."
+  type        = bool
+  default     = false
+}
+

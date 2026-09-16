@@ -70,3 +70,16 @@ variable "labels" {
     tier = "ai-foundation"
   }
 }
+
+variable "force_destroy" {
+  description = "Whether to allow deleting GCS buckets that contain objects (useful for demo teardown)."
+  type        = bool
+  default     = false
+}
+
+variable "kms_key_name" {
+  description = "Optional Cloud KMS CryptoKey ID for CMEK encryption on BigQuery and Cloud Storage buckets."
+  type        = string
+  default     = ""
+}
+

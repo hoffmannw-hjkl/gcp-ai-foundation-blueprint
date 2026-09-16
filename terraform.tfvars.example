@@ -1,44 +1,64 @@
 # ==============================================================================
 # Configuration Exemple pour GCP AI Foundation Blueprint
-# Copiez ce fichier vers 'terraform.tfvars' et personnalisez les valeurs.
+# Copiez ce fichier vers 'terraform.tfvars' et décommentez le profil souhaité.
 # ==============================================================================
 
-# ID du projet Google Cloud cible (ex: votre projet Argolis ou Sandbox Elevate)
-project_id = "my-gcp-ai-project-id"
-
-# Région et Zone principales (Data Residency & Latence)
-region = "europe-west1"
-zone   = "europe-west1-b"
-
-# Préfixe pour nommer harmonieusement toutes les ressources
-resource_prefix = "ai-demo"
+# ------------------------------------------------------------------------------
+# 1. Paramètres de Base (Communs à tous les profils)
+# ------------------------------------------------------------------------------
+project_id      = "my-gcp-ai-project-id"
+region          = "europe-west1"
+zone            = "europe-west1-b"
+resource_prefix = "ai-base"
 
 # Suffixe aléatoire anti-collision (recommandé: true pour éviter les collisions GCS)
 enable_random_suffix = true
 random_suffix_length = 4
 
-# Options d'architecture Compute
-enable_gke      = true   # Activer le cluster GKE Autopilot privé
-enable_cloudrun = false  # Activer le service Cloud Run Serverless (alternative rapide)
-enable_bastion  = true   # Activer la VM Bastion privée sous IAP
-
-# Sécurité & WAF
-enable_waf  = true
-domain_name = ""                     # ex: "demo.altostrat.com" (laisser vide si pas de domaine)
-admin_email = "user@example.com"    # Administrateur pour l'accès IAP
-
-# Observabilité & Alerting
-enable_observability = true
-alert_email          = "sre-alerts@example.com"
-
-# Labels / FinOps
 labels = {
   environment = "demo"
   managed_by  = "terraform"
   framework   = "elevate-spark"
 }
 
-# FinOps & Facturation (Optionnel : laisser vide pour désactiver)
-billing_account = ""     # ex: "012345-678901-ABCDEF"
-budget_amount   = 100    # Budget mensuel cible en USD
+# ------------------------------------------------------------------------------
+# 2. Choix du Profil d'Architecture (Décommentez Profil A ou Profil B)
+# ------------------------------------------------------------------------------
+
+# === PROFIL A : Démo Légère & Serverless (Cloud Run + Data/AI — Recommandé pour Démos) ===
+# Déploiement rapide (~2 min), coût quasi nul au repos (scale-to-zero), Direct VPC Egress.
+enable_gke           = false
+enable_cloudrun      = true
+enable_bastion       = false
+enable_waf           = false
+enable_observability = true
+enable_backup_dr     = false
+deletion_protection  = false
+force_destroy        = true
+
+# === PROFIL B : Production Enterprise Souveraine (Décommentez pour activer GKE + WAF + WORM) ===
+# enable_gke           = true
+# enable_cloudrun      = false
+# enable_bastion       = true
+# enable_waf           = true
+# enable_observability = true
+# enable_backup_dr     = true
+# deletion_protection  = true
+# force_destroy        = false
+
+# ------------------------------------------------------------------------------
+# 3. Sécurité, WAF & Chiffrement Souverain (Optionnel)
+# ------------------------------------------------------------------------------
+domain_name           = ""                          # ex: "demo.altostrat.com" (laisser vide si pas de domaine)
+admin_email           = "user@example.com"         # Administrateur pour l'accès Zero-Trust IAP
+excluded_upload_paths = ["/api/documents/upload"]  # Chemins exclus de l'inspection OWASP body (upload PDF)
+kms_key_name          = ""                          # Clé Cloud KMS (CMEK) optionnelle pour BigQuery et GCS
+
+# ------------------------------------------------------------------------------
+# 4. Observabilité, Alerting SRE & FinOps (Optionnel)
+# ------------------------------------------------------------------------------
+alert_email     = "sre-alerts@example.com"
+billing_account = ""     # ex: "012345-678901-ABCDEF" (laisser vide pour désactiver le budget)
+budget_amount   = 100    # Budget mensuel cible
 budget_currency = "USD"
+

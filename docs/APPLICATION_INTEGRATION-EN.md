@@ -30,25 +30,27 @@ flowchart LR
 
 ## 1. Retrieve Terraform Outputs
 
-After running `terraform apply`, extract the resource identifiers and endpoints:
+After running `terraform apply`, extract the resource identifiers and endpoints directly without manual string parsing:
 
 ```bash
 cd gcp-ai-foundation-blueprint
 
 PROJECT_ID=$(gcloud config get-value project)
 GKE_CLUSTER=$(terraform output -raw gke_cluster_name)
+GKE_GSA=$(terraform output -raw gke_app_service_account_email)
+CLOUDRUN_SA=$(terraform output -raw cloudrun_service_account_email)
+VPC_NETWORK=$(terraform output -raw vpc_network_name)
+SUBNET_NAME=$(terraform output -raw subnet_name)
 BASTION_CMD=$(terraform output -raw bastion_ssh_command)
-RAG_BUCKET=$(terraform output -raw rag_bucket_url)
-ARTIFACTS_BUCKET=$(terraform output -raw artifacts_bucket_url)
+RAG_BUCKET=$(terraform output -raw rag_bucket_name)
+ARTIFACTS_BUCKET=$(terraform output -raw artifacts_bucket_name)
 BQ_DATASET=$(terraform output -raw lakehouse_dataset_id)
-WAF_POLICY=$(terraform output -raw waf_policy_id | awk -F'/' '{print $NF}')
-GLOBAL_IP=$(terraform output -raw external_ip)
+WAF_POLICY=$(terraform output -raw waf_policy_name)
+GLOBAL_IP_NAME=$(terraform output -raw external_ip_name)
 ```
 
-The Google Service Account (GSA) configured for Workload Identity follows the naming pattern:
-`<name_prefix>-gke-ai-sa@${PROJECT_ID}.iam.gserviceaccount.com`
-
 ---
+
 
 ## 2. Option A: Deploy on GKE Autopilot (Recommended)
 
@@ -281,25 +283,27 @@ kubectl get pods -w
 
 ---
 
-## 3. Option B: Deploy on Cloud Run v2 (Serverless)
+## 3. Option B: Deploy on Cloud Run v2 (Serverless — Direct VPC Egress)
 
-For serverless scale-to-zero workloads:
+For serverless scale-to-zero workloads (*Profile A*):
 
 1. Enable `enable_cloudrun = true` in `terraform.tfvars`.
-2. Deploy the container bound to the **Serverless VPC Access Connector**:
+2. Deploy the container bound directly to the VPC via **Direct VPC Egress** and the dedicated Service Account:
    ```bash
    gcloud run deploy my-ai-service \
      --image="europe-west1-docker.pkg.dev/${PROJECT_ID}/ai-app-repo/my-ai-app:latest" \
      --region="europe-west1" \
-     --service-account="ai-demo-xxxx-cr-sa@${PROJECT_ID}.iam.gserviceaccount.com" \
-     --vpc-connector="ai-demo-xxxx-vpc-connector" \
-     --vpc-egress="private-ranges-only" \
-     --set-env-vars="GCP_PROJECT=${PROJECT_ID},BQ_DATASET=ai_demo_xxxx_lakehouse" \
+     --service-account="${CLOUDRUN_SA}" \
+     --network="${VPC_NETWORK}" \
+     --subnet="${SUBNET_NAME}" \
+     --vpc-egress="all-traffic" \
+     --set-env-vars="GCP_PROJECT=${PROJECT_ID},BQ_DATASET=${BQ_DATASET},GCS_BUCKET=${RAG_BUCKET}" \
      --no-allow-unauthenticated \
      --project="${PROJECT_ID}"
    ```
 
 ---
+
 
 ## 4. Python Application Code Example (`google-genai` SDK)
 

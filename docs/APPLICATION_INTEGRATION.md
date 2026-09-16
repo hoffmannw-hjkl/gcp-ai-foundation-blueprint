@@ -30,25 +30,27 @@ flowchart LR
 
 ## 1. Récupération des Paramètres Terraform
 
-Après avoir exécuté `terraform apply`, récupérez les valeurs clés générées par votre infrastructure :
+Après avoir exécuté `terraform apply`, récupérez directement les valeurs générées par votre infrastructure sans aucun retraitement manuel :
 
 ```bash
 # Se placer dans le répertoire du blueprint
 cd gcp-ai-foundation-blueprint
 
-# Récupérer les identifiants
+# Récupérer les identifiants Plug-and-Play
 PROJECT_ID=$(gcloud config get-value project)
 GKE_CLUSTER=$(terraform output -raw gke_cluster_name)
+GKE_GSA=$(terraform output -raw gke_app_service_account_email)
+CLOUDRUN_SA=$(terraform output -raw cloudrun_service_account_email)
+VPC_NETWORK=$(terraform output -raw vpc_network_name)
+SUBNET_NAME=$(terraform output -raw subnet_name)
 BASTION_CMD=$(terraform output -raw bastion_ssh_command)
-RAG_BUCKET=$(terraform output -raw rag_bucket_url)
-ARTIFACTS_BUCKET=$(terraform output -raw artifacts_bucket_url)
+RAG_BUCKET=$(terraform output -raw rag_bucket_name)
+ARTIFACTS_BUCKET=$(terraform output -raw artifacts_bucket_name)
 BQ_DATASET=$(terraform output -raw lakehouse_dataset_id)
-WAF_POLICY=$(terraform output -raw waf_policy_id | awk -F'/' '{print $NF}')
-GLOBAL_IP=$(terraform output -raw external_ip)
+WAF_POLICY=$(terraform output -raw waf_policy_name)
+GLOBAL_IP_NAME=$(terraform output -raw external_ip_name)
 ```
 
-Le compte de service Google (GSA) configuré par défaut pour Workload Identity a pour format :
-`<name_prefix>-gke-ai-sa@${PROJECT_ID}.iam.gserviceaccount.com`
 
 ---
 
@@ -288,23 +290,25 @@ kubectl get pods -w
 
 ---
 
-## 3. Option B : Déploiement sur Cloud Run v2 (Serverless)
+## 3. Option B : Déploiement sur Cloud Run v2 (Serverless — Direct VPC Egress)
 
-Si vous préférez une architecture Serverless avec dimensionnement à zéro :
+Si vous préférez une architecture Serverless avec dimensionnement à zéro (*Profil A*) :
 
 1. Activez `enable_cloudrun = true` dans votre `terraform.tfvars`.
-2. Déployez votre conteneur en le rattachant au **Serverless VPC Access Connector** et au compte de service dédié :
+2. Déployez votre conteneur en le rattachant directement au VPC via **Direct VPC Egress** et au compte de service dédié généré par Terraform :
    ```bash
    gcloud run deploy my-ai-service \
      --image="europe-west1-docker.pkg.dev/${PROJECT_ID}/ai-app-repo/my-ai-app:latest" \
      --region="europe-west1" \
-     --service-account="ai-demo-xxxx-cr-sa@${PROJECT_ID}.iam.gserviceaccount.com" \
-     --vpc-connector="ai-demo-xxxx-vpc-connector" \
-     --vpc-egress="private-ranges-only" \
-     --set-env-vars="GCP_PROJECT=${PROJECT_ID},BQ_DATASET=ai_demo_xxxx_lakehouse" \
+     --service-account="${CLOUDRUN_SA}" \
+     --network="${VPC_NETWORK}" \
+     --subnet="${SUBNET_NAME}" \
+     --vpc-egress="all-traffic" \
+     --set-env-vars="GCP_PROJECT=${PROJECT_ID},BQ_DATASET=${BQ_DATASET},GCS_BUCKET=${RAG_BUCKET}" \
      --no-allow-unauthenticated \
      --project="${PROJECT_ID}"
    ```
+
 
 ---
 
