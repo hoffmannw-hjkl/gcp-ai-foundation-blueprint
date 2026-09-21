@@ -142,6 +142,8 @@ Les sorties sont conçues pour être injectées directement dans les scripts de 
 | `cloudrun_service_name` / `cloudrun_service_uri` | Nom et URL HTTPS du service Cloud Run v2. |
 | `cloudrun_service_account_email` | Email du Service Account dédié au service Cloud Run. |
 | `bastion_ssh_command` | Commande `gcloud compute ssh ... --tunnel-through-iap` pour se connecter au bastion privé. |
+| `bastion_name` / `bastion_zone` | Nom court de la VM Bastion et zone de déploiement (pour scripts d'automatisation IAP). |
+| `project_id` / `region` | Identifiant du projet Google Cloud et région primaire de déploiement. |
 
 
 ---
