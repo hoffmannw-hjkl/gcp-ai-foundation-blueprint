@@ -96,6 +96,32 @@ resource "google_monitoring_alert_policy" "high_error_rate" {
   notification_channels = [google_monitoring_notification_channel.email[0].id]
 }
 
+resource "google_monitoring_alert_policy" "high_latency" {
+  count        = var.alert_email_address != "" ? 1 : 0
+  project      = var.project_id
+  display_name = "AI Foundation - High P95 Latency Alert"
+  combiner     = "OR"
+
+  conditions {
+    display_name = "P95 Backend Latency > 3000ms over 5m"
+    condition_threshold {
+      filter          = "metric.type=\"loadbalancing.googleapis.com/https/backend_latencies\" resource.type=\"https_lb_rule\""
+      duration        = "300s"
+      comparison      = "COMPARISON_GT"
+      threshold_value = 3000
+      trigger {
+        count = 1
+      }
+      aggregations {
+        alignment_period   = "60s"
+        per_series_aligner = "ALIGN_PERCENTILE_95"
+      }
+    }
+  }
+
+  notification_channels = [google_monitoring_notification_channel.email[0].id]
+}
+
 # ------------------------------------------------------------------------------
 # Unified Cloud Monitoring Dashboard
 # ------------------------------------------------------------------------------
