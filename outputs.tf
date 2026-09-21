@@ -138,4 +138,25 @@ output "gke_backup_plan_id" {
   value       = try(module.backup_dr[0].gke_backup_plan_id, null)
 }
 
+output "project_id" {
+  description = "Google Cloud Project ID."
+  value       = var.project_id
+}
+
+output "region" {
+  description = "Primary Google Cloud Region."
+  value       = var.region
+}
+
+output "bastion_name" {
+  description = "Short name of the bastion host (if enabled)."
+  value       = try(module.bastion[0].instance_name, null)
+}
+
+output "bastion_zone" {
+  description = "Zone of the bastion host (if enabled)."
+  value       = var.enable_bastion ? var.zone : null
+}
+
+
 

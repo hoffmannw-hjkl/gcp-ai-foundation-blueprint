@@ -142,6 +142,8 @@ Outputs are designed to be injected directly into downstream application deploym
 | `cloudrun_service_name` / `cloudrun_service_uri` | Name and HTTPS endpoint URI for the Cloud Run v2 service. |
 | `cloudrun_service_account_email` | Dedicated Service Account email for the Cloud Run service. |
 | `bastion_ssh_command` | `gcloud compute ssh ... --tunnel-through-iap` command to connect to the private bastion. |
+| `bastion_name` / `bastion_zone` | Short name of the Bastion VM and target deployment zone (for IAP automation scripts). |
+| `project_id` / `region` | Google Cloud project ID and primary deployment region. |
 
 
 ---

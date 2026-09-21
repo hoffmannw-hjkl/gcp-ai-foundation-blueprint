@@ -33,7 +33,7 @@ cd examples/04-rag-comparison-chatbot
 # Exécuter en local avec vos identifiants GCP
 export GCP_PROJECT=$(gcloud config get-value project)
 export GCP_REGION="europe-west1"
-export GEMINI_MODEL="gemini-2.5-flash"
+export GEMINI_MODEL="gemini-3.5-flash"
 export GOOGLE_OAUTH_ACCESS_TOKEN=$(gcloud auth print-access-token)
 
 go run main.go
@@ -54,7 +54,7 @@ gcloud run deploy rag-comparison-demo \
   --region europe-west1 \
   --platform managed \
   --allow-unauthenticated \
-  --set-env-vars "GCP_PROJECT=${GCP_PROJECT},GCP_REGION=europe-west1,GEMINI_MODEL=gemini-2.5-flash"
+  --set-env-vars "GCP_PROJECT=${GCP_PROJECT},GCP_REGION=europe-west1,GEMINI_MODEL=gemini-3.5-flash"
 ```
 
 ---
