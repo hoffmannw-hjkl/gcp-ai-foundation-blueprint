@@ -20,6 +20,10 @@ resource "google_container_cluster" "cluster" {
   enable_l4_ilb_subsetting = true
   deletion_protection      = var.deletion_protection
 
+  release_channel {
+    channel = "REGULAR"
+  }
+
   network    = var.network_id
   subnetwork = var.subnet_id
 
