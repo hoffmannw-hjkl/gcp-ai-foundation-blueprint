@@ -204,6 +204,27 @@ Once the foundation is provisioned, deploy compatible applications:
 
 ---
 
+## 🤖 Agentic Architecture & Embedded Skills (M1L1 Skills Framework)
+
+This repository implements a **Dual-Layer AI-Native Engineering Architecture** aligned with the **Google Cloud M1L1 Skills Framework** (`AGENTS.md`, `.agents/agents/`, `.agents/skills/`):
+
+### 1. Specialized Repository Subagents (`.agents/agents/`)
+Automatically discovered by **Jetski**, **Antigravity**, and **Gemini CLI**:
+- **[`secops-auditor`](.agents/agents/secops-auditor.md)**: Audits Cloud Armor OWASP Top 10 WAF policies (`preview` vs enforcement mode), IAM least-privilege bindings, and Cloud KMS CMEK encryption.
+- **[`finops-advisor`](.agents/agents/finops-advisor.md)**: Analyzes Direct VPC Egress costs (`0 EUR` idle), Cloud Run scale-to-zero (`min_instances = 0`), GKE Spot vs Autopilot profiles, and Cloud Billing budget thresholds (`50% / 90% / 100%`).
+- **[`dr-chaos-architect`](.agents/agents/dr-chaos-architect.md)**: Audits Backup for GKE policies, GCS soft-delete (`7d`), multi-zone high availability (`europe-west1`), and `deletion_protection` safeguards.
+
+### 2. Procedural Skill (`terraform-blueprint-validation`)
+- **Path**: [`.agents/skills/terraform-blueprint-validation/SKILL.md`](.agents/skills/terraform-blueprint-validation/SKILL.md)
+- **Automated Gatekeeper Script**:
+  ```bash
+  ./.agents/skills/terraform-blueprint-validation/scripts/verify.sh
+  ```
+  Validates `terraform fmt -check -recursive`, `terraform validate`, `enable_*` toggle consistency, and `agentic_platform_config` outputs for downstream multi-agent swarms (`app-rag-comparison` and `app-civiclens`).
+
+---
+
 ## License
 
 This project is licensed under the Apache License 2.0. See [LICENSE](LICENSE) for details.
+
