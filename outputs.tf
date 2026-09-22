@@ -158,5 +158,19 @@ output "bastion_zone" {
   value       = var.enable_bastion ? var.zone : null
 }
 
+output "agentic_platform_config" {
+  description = "Plug-and-play Vertex AI Agent Engine & ADK 2.0 runtime configuration for multi-agent swarms."
+  value = {
+    project_id             = var.project_id
+    region                 = var.region
+    vertex_ai_endpoint     = "${var.region}-aiplatform.googleapis.com"
+    lakehouse_dataset_id   = module.data_ai.dataset_id
+    rag_bucket_name        = module.data_ai.rag_bucket_name
+    artifacts_bucket_name  = module.data_ai.artifacts_bucket_name
+    workload_identity_pool = "${var.project_id}.svc.id.goog"
+  }
+}
+
+
 
 
