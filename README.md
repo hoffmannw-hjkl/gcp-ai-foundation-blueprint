@@ -204,6 +204,30 @@ Une fois l'infrastructure provisionnée, déployez l'une des applications compat
 
 ---
 
+## 🤖 Architecture Agentique & Skills Embarqués (`M1L1 Skills Framework`)
+
+Ce dépôt intègre l'architecture **AI-Native Software Engineering (Elevate 2026 & EMEA SPARK)** ainsi que les 5 *Skill Patterns* du framework officiel **`M1L1 Skills Framework`** (*Tool Wrapper*, *Auth Recipe*, *Generator / Experience Before Theory*, *Reviewer Checklist* et *Workflow*).
+
+### 1. Sous-Agents Spécialisés Embarqués (`.agents/agents/`)
+Découverts automatiquement par **Jetski**, **Antigravity** et **Gemini CLI** (voir [`AGENTS.md`](AGENTS.md)) :
+- **[`secops-auditor`](.agents/agents/secops-auditor.md)** : Auditeur sécurité Terraform SaferGCP (contrôle IAM scopé aux ressources, zéro IP publique Argolis, règles OWASP Cloud Armor avec exclusion d'upload PDF `/api/documents/upload`, prévention d'accès public GCS et CMEK).
+- **[`finops-advisor`](.agents/agents/finops-advisor.md)** : Conseiller FinOps (dimensionnement *Profil A Serverless Demo* vs *Profil B Production Enterprise*, cycle de vie GCS Nearline/Coldline, alertes budgétaires sans diff perpétuel).
+- **[`dr-chaos-architect`](.agents/agents/dr-chaos-architect.md)** : Architecte Résilience & Backup-DR (coffres WORM `google-beta` et synchronisation de l'addon Backup for GKE).
+
+### 2. Skill de Validation & Runbook Exécutable (`.agents/skills/terraform-blueprint-validation/`)
+- **Fichier Skill** : [`.agents/skills/terraform-blueprint-validation/SKILL.md`](.agents/skills/terraform-blueprint-validation/SKILL.md)
+- **Script d'auto-vérification** :
+  ```bash
+  ./.agents/skills/terraform-blueprint-validation/scripts/verify.sh
+  ```
+  *(Exécute `terraform fmt -recursive`, `terraform validate`, et vérifie l'absence de dérive `terraform plan` avec injection automatique du jeton `GOOGLE_OAUTH_ACCESS_TOKEN`).*
+
+### 3. Support Runtime Multi-Agents (`agentic_platform_config`)
+L'output racine `agentic_platform_config` fournit la configuration prête à l'emploi pour connecter les équipes d'agents **Google ADK 2.0** et **Vertex AI Agent Engine** (`app-civiclens` et `app-rag-comparison`).
+
+---
+
 ## Licence
 
 Ce projet est distribué sous licence Apache 2.0. Consultez le fichier [LICENSE](LICENSE) pour plus d'informations.
+
