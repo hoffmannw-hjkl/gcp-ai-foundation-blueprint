@@ -2,8 +2,8 @@
 >
 > 🔗 **Écosystème EMEA SPARK & Applications Compagnons :**
 > Ce référentiel fournit le **socle d'infrastructure d'entreprise (Landing Zone IaC)**. Pour explorer les applications déployées sur ce socle :
-> - **[RAG Comparison Demo (cloud-gtm/app-rag-comparison)](https://github.com/cloud-gtm/app-rag-comparison)** : Comparateur Recherche Lexicale vs RAG Hybride (Embeddings 002 + BM25), streaming SSE et évaluation GenAI par Autorater Vertex AI.
-> - **[CivicLens (cloud-gtm/civiclens)](https://github.com/cloud-gtm/civiclens)** : Plateforme analytique de finances publiques (GKE Autopilot, Cloud SQL pgvector, Gemini multimodal).
+> - **[RAG Comparison Demo (cloud-gtm/app-rag-comparison)](https://github.com/cloud-gtm/app-rag-comparison)** : Comparateur Recherche Lexicale vs RAG Hybride (Embeddings + BM25 RRF), **Swarm 4 Sous-Agents CRAG (`🤖 Agentic RAG`)**, streaming SSE et évaluation GenAI par Autorater Vertex AI.
+> - **[CivicLens (cloud-gtm/civiclens)](https://github.com/cloud-gtm/civiclens)** : Plateforme analytique de finances publiques M57 (GKE Autopilot, Cloud SQL `pgvector`, **Swarm Multi-Agents Google ADK 2.0** et Gemini multimodal).
 
 # GCP AI Foundation Blueprint
 
@@ -144,6 +144,7 @@ Les sorties sont conçues pour être injectées directement dans les scripts de 
 | `bastion_ssh_command` | Commande `gcloud compute ssh ... --tunnel-through-iap` pour se connecter au bastion privé. |
 | `bastion_name` / `bastion_zone` | Nom court de la VM Bastion et zone de déploiement (pour scripts d'automatisation IAP). |
 | `project_id` / `region` | Identifiant du projet Google Cloud et région primaire de déploiement. |
+| `agentic_platform_config` | Objet JSON structuré (endpoints Vertex AI, dataset BigQuery Lakehouse, buckets GCS et Workload Identity) consommé par les Swarms **Google ADK 2.0** (`civiclens`) et **CRAG** (`app-rag-comparison`). |
 
 
 ---
