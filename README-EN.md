@@ -246,10 +246,31 @@ flowchart LR
 | **[`terraform-blueprint-validation`](.agents/skills/terraform-blueprint-validation/SKILL.md)** | **Layer 1** *(Gatekeeper)* | Local terminal or CI/CD (`scripts/verify.sh`) | Before every `git commit` or Pull Request. | Executes the 4-stage verification gate: `terraform fmt -check -recursive`, `terraform validate`, `enable_*` toggle presence, and `agentic_platform_config` output checks. |
 | **`agentic_platform_config`** | **Layer 2** *(Runtime Bridge)* | Terraform Root Output (`outputs.tf`) | After `terraform apply`, during `app-rag-comparison` or `civiclens` deployment. | Automatically injects BigQuery Lakehouse dataset IDs, GCS RAG buckets, and Workload Identity bindings into downstream **CRAG** and **Google ADK 2.0** multi-agent swarms. |
 
+### 🎬 Live Demo Playbook: 3 Step-by-Step Scenarios (IDE / Gemini CLI / Jetski)
+
+During a live customer demonstration or architecture workshop, copy-paste these 3 prompts or commands to showcase how the embedded agents safeguard the Terraform Landing Zone in real time:
+
+1. **Scenario 1 — Showcase SecOps & Cloud Armor WAF Auditing (`secops-auditor`)**:
+   > 💬 *Copy-paste prompt for Jetski / Antigravity / Gemini CLI:*
+   > `"Invoke the secops-auditor subagent to audit modules/security-waf/main.tf and explain how PDF uploads on /api/documents/upload avoid HTTP 403 false positives under Cloud Armor OWASP SQLi/XSS inspection."`
+   - **What it demonstrates**: The agent inspects the Cloud Armor rule priority, highlights the targeted `request.path.matches('/api/documents/upload')` exclusion (*Experience Before Theory* pattern), and verifies zero-public-IP compliance.
+
+2. **Scenario 2 — Showcase FinOps Serverless vs Enterprise Sizing (`finops-advisor`)**:
+   > 💬 *Copy-paste prompt for Jetski / Antigravity / Gemini CLI:*
+   > `"Invoke the finops-advisor subagent to compare idle monthly costs between Profile A (Serverless Cloud Run with Direct VPC Egress) and Profile B (GKE Autopilot + WORM Backup DR) in terraform.tfvars.example."`
+   - **What it demonstrates**: The agent explains how `Direct VPC Egress` eliminates fixed 24/7 `e2-micro` VPC Connector instance costs and verifies Cloud Billing alert thresholds (`50% / 90% / 100%`).
+
+3. **Scenario 3 — Run the Automated M1L1 Gatekeeper (`verify.sh`)**:
+   ```bash
+   ./.agents/skills/terraform-blueprint-validation/scripts/verify.sh
+   ```
+   - **What it demonstrates**: Runs all 4 deterministic gates in under 5 seconds (`terraform fmt`, `terraform validate`, `enable_*` toggles, and `agentic_platform_config` output verification).
+
 ---
 
 ## License
 
 This project is licensed under the Apache License 2.0. See [LICENSE](LICENSE) for details.
+
 
 
