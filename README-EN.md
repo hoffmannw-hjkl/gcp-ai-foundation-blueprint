@@ -2,8 +2,8 @@
 >
 > 🔗 **EMEA SPARK Ecosystem & Companion Applications:**
 > This repository provides the **Enterprise Infrastructure Foundation (IaC Landing Zone)**. To explore companion applications running on top of this foundation:
-> - **[RAG Comparison Demo (cloud-gtm/app-rag-comparison)](https://github.com/cloud-gtm/app-rag-comparison)**: Lexical Search vs Hybrid Grounded RAG (Embeddings 002 + BM25), SSE streaming, and Vertex AI Autorater GenAI evaluation.
-> - **[CivicLens (cloud-gtm/civiclens)](https://github.com/cloud-gtm/civiclens)**: Public finance analytics platform (GKE Autopilot, Cloud SQL pgvector, multimodal Gemini).
+> - **[RAG Comparison Demo (cloud-gtm/app-rag-comparison)](https://github.com/cloud-gtm/app-rag-comparison)**: Lexical Search vs Hybrid Grounded RAG (Embeddings + BM25 RRF), **4-Subagent CRAG Swarm (`🤖 Agentic RAG`)**, SSE streaming, and Vertex AI Autorater GenAI evaluation.
+> - **[CivicLens (cloud-gtm/civiclens)](https://github.com/cloud-gtm/civiclens)**: Municipal public finance M57 analytics platform (GKE Autopilot, Cloud SQL `pgvector`, **Google ADK 2.0 Multi-Agent Swarm**, and multimodal Gemini).
 
 # GCP AI Foundation Blueprint
 
@@ -144,6 +144,7 @@ Outputs are designed to be injected directly into downstream application deploym
 | `bastion_ssh_command` | `gcloud compute ssh ... --tunnel-through-iap` command to connect to the private bastion. |
 | `bastion_name` / `bastion_zone` | Short name of the Bastion VM and target deployment zone (for IAP automation scripts). |
 | `project_id` / `region` | Google Cloud project ID and primary deployment region. |
+| `agentic_platform_config` | Structured JSON object (Vertex AI endpoints, BigQuery Lakehouse dataset, GCS buckets, and Workload Identity bindings) consumed by downstream **Google ADK 2.0** (`civiclens`) and **CRAG** (`app-rag-comparison`) multi-agent swarms. |
 
 
 ---
@@ -204,27 +205,72 @@ Once the foundation is provisioned, deploy compatible applications:
 
 ---
 
-## 🤖 Agentic Architecture & Embedded Skills (M1L1 Skills Framework)
+## 🤖 Agentic Architecture & Embedded Skills (`M1L1 Skills Framework`)
 
-This repository implements a **Dual-Layer AI-Native Engineering Architecture** aligned with the **Google Cloud M1L1 Skills Framework** (`AGENTS.md`, `.agents/agents/`, `.agents/skills/`):
+This repository implements a **Dual-Layer AI-Native Engineering Architecture** aligned with the **Google Cloud M1L1 Skills Framework** (*Tool Wrapper*, *Auth Recipe*, *Generator / Experience Before Theory*, *Reviewer Checklist*, and *Workflow*).
 
-### 1. Specialized Repository Subagents (`.agents/agents/`)
-Automatically discovered by **Jetski**, **Antigravity**, and **Gemini CLI**:
-- **[`secops-auditor`](.agents/agents/secops-auditor.md)**: Audits Cloud Armor OWASP Top 10 WAF policies (`preview` vs enforcement mode), IAM least-privilege bindings, and Cloud KMS CMEK encryption.
-- **[`finops-advisor`](.agents/agents/finops-advisor.md)**: Analyzes Direct VPC Egress costs (`0 EUR` idle), Cloud Run scale-to-zero (`min_instances = 0`), GKE Spot vs Autopilot profiles, and Cloud Billing budget thresholds (`50% / 90% / 100%`).
-- **[`dr-chaos-architect`](.agents/agents/dr-chaos-architect.md)**: Audits Backup for GKE policies, GCS soft-delete (`7d`), multi-zone high availability (`europe-west1`), and `deletion_protection` safeguards.
+### 🔄 Agent-Assisted IaC Lifecycle: Where and When Each Agent Enters into Action
 
-### 2. Procedural Skill (`terraform-blueprint-validation`)
-- **Path**: [`.agents/skills/terraform-blueprint-validation/SKILL.md`](.agents/skills/terraform-blueprint-validation/SKILL.md)
-- **Automated Gatekeeper Script**:
-  ```bash
-  ./.agents/skills/terraform-blueprint-validation/scripts/verify.sh
-  ```
-  Validates `terraform fmt -check -recursive`, `terraform validate`, `enable_*` toggle consistency, and `agentic_platform_config` outputs for downstream multi-agent swarms (`app-rag-comparison` and `app-civiclens`).
+Unlike a standard web application, a Terraform Landing Zone mobilizes its specialized agents throughout the **Infrastructure Engineering Lifecycle (Day-0 ➔ Day-1 ➔ Day-2)** before feeding its **`agentic_platform_config` output** into downstream production multi-agent swarms:
+
+```mermaid
+flowchart LR
+    subgraph Day0 ["1. Day-0: Sizing & FinOps"]
+        Dev(["Cloud Engineer / CE"]) -->|Selects tfvars profile| FinOps["🤖 finops-advisor\n(.agents/agents/finops-advisor.md)\n• Profile A (0€ idle) vs\n  Profile B (GKE + WORM)\n• Billing alerts 50/90/100%"]
+    end
+
+    subgraph Day1 ["2. Day-1: Coding & Auditing .tf Modules"]
+        FinOps --> TFCode["Edits Terraform modules\nnetworking / security-waf /\ncompute-gke / backup-dr"]
+        TFCode -->|Security Audit| SecOps["🛡️ secops-auditor\n(.agents/agents/secops-auditor.md)\n• SaferGCP: Zero public IPs\n• Resource-scoped IAM\n• Cloud Armor PDF upload exclusion"]
+        TFCode -->|Resilience Audit| DR["🌪️ dr-chaos-architect\n(.agents/agents/dr-chaos-architect.md)\n• WORM Vaults (google-beta)\n• Backup for GKE addon sync\n• deletion_protection"]
+    end
+
+    subgraph Gatekeeper ["3. Pre-Commit: M1L1 Skill"]
+        SecOps & DR --> Skill["🛠️ terraform-blueprint-validation\n(scripts/verify.sh)\n• terraform fmt -check\n• terraform validate\n• Output & toggle verification"]
+    end
+
+    subgraph Day2 ["4. Day-2: Runtime Multi-Agent Handshake"]
+        Skill -->|terraform apply| Output["⚡ Output: agentic_platform_config\n(Vertex AI endpoints, BQ Lakehouse,\nGCS Buckets, Workload Identity)"]
+        Output -->|Feeds| AppRAG["🤖 4-Agent CRAG Swarm\n(app-rag-comparison)"]
+        Output -->|Feeds| AppCivic["🏛️ 4-Agent ADK 2.0 Swarm\n(civiclens)"]
+    end
+```
+
+### 📊 Agent & Skill Trigger Matrix
+
+| Agent / Skill | Layer | Where does it run? | When does it enter into action? (Trigger) | What it verifies / produces |
+| :--- | :--- | :--- | :--- | :--- |
+| **[`finops-advisor`](.agents/agents/finops-advisor.md)** | **Layer 1** *(Build-Time)* | IDE / CLI *(Jetski, Antigravity, Gemini CLI)* | When creating or modifying `terraform.tfvars` or `modules/finops-budget/`. | Compares monthly spend between **Profile A** (Cloud Run *scale-to-zero* + Direct VPC Egress with zero fixed NAT VM cost) vs **Profile B** (GKE Autopilot + WORM), checks GCS lifecycle rules (`Nearline`/`Archive`), and validates budget alerts. |
+| **[`secops-auditor`](.agents/agents/secops-auditor.md)** | **Layer 1** *(Build-Time)* | IDE / CLI *(Jetski, Antigravity, Gemini CLI)* | Before committing changes to `modules/security-waf/`, `modules/networking/`, or IAM bindings. | Audits resource-scoped IAM bindings, verifies `enable_private_nodes = true`, and ensures Cloud Armor excludes `/api/documents/upload` from OWASP L7 body inspection (preventing HTTP 403 false positives on PDF uploads). |
+| **[`dr-chaos-architect`](.agents/agents/dr-chaos-architect.md)** | **Layer 1** *(Build-Time)* | IDE / CLI *(Jetski, Antigravity, Gemini CLI)* | When enabling `enable_backup_dr = true` or modifying `modules/compute-gke/`. | Verifies `google-beta` provider usage on `google_backup_dr_backup_vault`, checks synchronization between the GKE backup plan and `gke_backup_agent_config`, and enforces `deletion_protection`. |
+| **[`terraform-blueprint-validation`](.agents/skills/terraform-blueprint-validation/SKILL.md)** | **Layer 1** *(Gatekeeper)* | Local terminal or CI/CD (`scripts/verify.sh`) | Before every `git commit` or Pull Request. | Executes the 4-stage verification gate: `terraform fmt -check -recursive`, `terraform validate`, `enable_*` toggle presence, and `agentic_platform_config` output checks. |
+| **`agentic_platform_config`** | **Layer 2** *(Runtime Bridge)* | Terraform Root Output (`outputs.tf`) | After `terraform apply`, during `app-rag-comparison` or `civiclens` deployment. | Automatically injects BigQuery Lakehouse dataset IDs, GCS RAG buckets, and Workload Identity bindings into downstream **CRAG** and **Google ADK 2.0** multi-agent swarms. |
+
+### 🎬 Live Demo Playbook: 3 Step-by-Step Scenarios (IDE / Gemini CLI / Jetski)
+
+During a live customer demonstration or architecture workshop, copy-paste these 3 prompts or commands to showcase how the embedded agents safeguard the Terraform Landing Zone in real time:
+
+1. **Scenario 1 — Showcase SecOps & Cloud Armor WAF Auditing (`secops-auditor`)**:
+   > 💬 *Copy-paste prompt for Jetski / Antigravity / Gemini CLI:*
+   > `"Invoke the secops-auditor subagent to audit modules/security-waf/main.tf and explain how PDF uploads on /api/documents/upload avoid HTTP 403 false positives under Cloud Armor OWASP SQLi/XSS inspection."`
+   - **What it demonstrates**: The agent inspects the Cloud Armor rule priority, highlights the targeted `request.path.matches('/api/documents/upload')` exclusion (*Experience Before Theory* pattern), and verifies zero-public-IP compliance.
+
+2. **Scenario 2 — Showcase FinOps Serverless vs Enterprise Sizing (`finops-advisor`)**:
+   > 💬 *Copy-paste prompt for Jetski / Antigravity / Gemini CLI:*
+   > `"Invoke the finops-advisor subagent to compare idle monthly costs between Profile A (Serverless Cloud Run with Direct VPC Egress) and Profile B (GKE Autopilot + WORM Backup DR) in terraform.tfvars.example."`
+   - **What it demonstrates**: The agent explains how `Direct VPC Egress` eliminates fixed 24/7 `e2-micro` VPC Connector instance costs and verifies Cloud Billing alert thresholds (`50% / 90% / 100%`).
+
+3. **Scenario 3 — Run the Automated M1L1 Gatekeeper (`verify.sh`)**:
+   ```bash
+   ./.agents/skills/terraform-blueprint-validation/scripts/verify.sh
+   ```
+   - **What it demonstrates**: Runs all 4 deterministic gates in under 5 seconds (`terraform fmt`, `terraform validate`, `enable_*` toggles, and `agentic_platform_config` output verification).
 
 ---
 
 ## License
 
 This project is licensed under the Apache License 2.0. See [LICENSE](LICENSE) for details.
+
+
 

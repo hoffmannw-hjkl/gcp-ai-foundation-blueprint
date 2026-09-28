@@ -19,3 +19,19 @@ This repository implements the **Google Cloud Elevate 2026 & EMEA SPARK** AI-Nat
 | Skill Name | Path | Description |
 | :--- | :--- | :--- |
 | **`terraform-blueprint-validation`** | [`.agents/skills/terraform-blueprint-validation/SKILL.md`](.agents/skills/terraform-blueprint-validation/SKILL.md) | Automated workflow for `terraform fmt`, `terraform validate`, `GOOGLE_OAUTH_ACCESS_TOKEN` zero-drift `terraform plan`, and bilingual README sync. |
+
+---
+
+## 🎬 Quick Demo Prompts (How to Trigger Each Agent Live)
+
+- **Trigger `secops-auditor`**:
+  > `"Invoke secops-auditor to audit modules/security-waf/main.tf and verify SaferGCP compliance and PDF upload path exclusions."`
+- **Trigger `finops-advisor`**:
+  > `"Invoke finops-advisor to compare Profile A (Cloud Run Direct VPC Egress) vs Profile B (GKE Autopilot + WORM) in terraform.tfvars.example."`
+- **Trigger `dr-chaos-architect`**:
+  > `"Invoke dr-chaos-architect to verify that modules/backup-dr and modules/compute-gke properly synchronize WORM Backup Vaults and the GKE Backup agent."`
+- **Run the M1L1 Gatekeeper Script**:
+  ```bash
+  ./.agents/skills/terraform-blueprint-validation/scripts/verify.sh
+  ```
+

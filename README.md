@@ -2,8 +2,8 @@
 >
 > 🔗 **Écosystème EMEA SPARK & Applications Compagnons :**
 > Ce référentiel fournit le **socle d'infrastructure d'entreprise (Landing Zone IaC)**. Pour explorer les applications déployées sur ce socle :
-> - **[RAG Comparison Demo (cloud-gtm/app-rag-comparison)](https://github.com/cloud-gtm/app-rag-comparison)** : Comparateur Recherche Lexicale vs RAG Hybride (Embeddings 002 + BM25), streaming SSE et évaluation GenAI par Autorater Vertex AI.
-> - **[CivicLens (cloud-gtm/civiclens)](https://github.com/cloud-gtm/civiclens)** : Plateforme analytique de finances publiques (GKE Autopilot, Cloud SQL pgvector, Gemini multimodal).
+> - **[RAG Comparison Demo (cloud-gtm/app-rag-comparison)](https://github.com/cloud-gtm/app-rag-comparison)** : Comparateur Recherche Lexicale vs RAG Hybride (Embeddings + BM25 RRF), **Swarm 4 Sous-Agents CRAG (`🤖 Agentic RAG`)**, streaming SSE et évaluation GenAI par Autorater Vertex AI.
+> - **[CivicLens (cloud-gtm/civiclens)](https://github.com/cloud-gtm/civiclens)** : Plateforme analytique de finances publiques M57 (GKE Autopilot, Cloud SQL `pgvector`, **Swarm Multi-Agents Google ADK 2.0** et Gemini multimodal).
 
 # GCP AI Foundation Blueprint
 
@@ -144,6 +144,7 @@ Les sorties sont conçues pour être injectées directement dans les scripts de 
 | `bastion_ssh_command` | Commande `gcloud compute ssh ... --tunnel-through-iap` pour se connecter au bastion privé. |
 | `bastion_name` / `bastion_zone` | Nom court de la VM Bastion et zone de déploiement (pour scripts d'automatisation IAP). |
 | `project_id` / `region` | Identifiant du projet Google Cloud et région primaire de déploiement. |
+| `agentic_platform_config` | Objet JSON structuré (endpoints Vertex AI, dataset BigQuery Lakehouse, buckets GCS et Workload Identity) consommé par les Swarms **Google ADK 2.0** (`civiclens`) et **CRAG** (`app-rag-comparison`). |
 
 
 ---
@@ -208,26 +209,68 @@ Une fois l'infrastructure provisionnée, déployez l'une des applications compat
 
 Ce dépôt intègre l'architecture **AI-Native Software Engineering (Elevate 2026 & EMEA SPARK)** ainsi que les 5 *Skill Patterns* du framework officiel **`M1L1 Skills Framework`** (*Tool Wrapper*, *Auth Recipe*, *Generator / Experience Before Theory*, *Reviewer Checklist* et *Workflow*).
 
-### 1. Sous-Agents Spécialisés Embarqués (`.agents/agents/`)
-Découverts automatiquement par **Jetski**, **Antigravity** et **Gemini CLI** (voir [`AGENTS.md`](AGENTS.md)) :
-- **[`secops-auditor`](.agents/agents/secops-auditor.md)** : Auditeur sécurité Terraform SaferGCP (contrôle IAM scopé aux ressources, zéro IP publique Argolis, règles OWASP Cloud Armor avec exclusion d'upload PDF `/api/documents/upload`, prévention d'accès public GCS et CMEK).
-- **[`finops-advisor`](.agents/agents/finops-advisor.md)** : Conseiller FinOps (dimensionnement *Profil A Serverless Demo* vs *Profil B Production Enterprise*, cycle de vie GCS Nearline/Coldline, alertes budgétaires sans diff perpétuel).
-- **[`dr-chaos-architect`](.agents/agents/dr-chaos-architect.md)** : Architecte Résilience & Backup-DR (coffres WORM `google-beta` et synchronisation de l'addon Backup for GKE).
+### 🔄 Cycle de Vie IaC Assisté par Agents : Où et Quand chaque Agent entre en action
 
-### 2. Skill de Validation & Runbook Exécutable (`.agents/skills/terraform-blueprint-validation/`)
-- **Fichier Skill** : [`.agents/skills/terraform-blueprint-validation/SKILL.md`](.agents/skills/terraform-blueprint-validation/SKILL.md)
-- **Script d'auto-vérification** :
-  ```bash
-  ./.agents/skills/terraform-blueprint-validation/scripts/verify.sh
-  ```
-  *(Exécute `terraform fmt -recursive`, `terraform validate`, et vérifie l'absence de dérive `terraform plan` avec injection automatique du jeton `GOOGLE_OAUTH_ACCESS_TOKEN`).*
+Contrairement à une application web classique, un socle Terraform (Landing Zone) mobilise ses agents tout au long du **cycle d'ingénierie d'infrastructure (Day-0 ➔ Day-1 ➔ Day-2)** avant d'alimenter en **sortie (`agentic_platform_config`)** les Swarms applicatifs en production :
 
-### 3. Support Runtime Multi-Agents (`agentic_platform_config`)
-L'output racine `agentic_platform_config` fournit la configuration prête à l'emploi pour connecter les équipes d'agents **Google ADK 2.0** et **Vertex AI Agent Engine** (`app-civiclens` et `app-rag-comparison`).
+```mermaid
+flowchart LR
+    subgraph Day0 ["1. Day-0 : Cadrage & FinOps"]
+        Dev(["Ingénieur Cloud / CE"]) -->|Choix du profil tfvars| FinOps["🤖 finops-advisor\n(.agents/agents/finops-advisor.md)\n• Arbitrage Profil A (0€ repos)\n  vs Profil B (GKE + WORM)\n• Seuils Cloud Billing 50/90/100%"]
+    end
+
+    subgraph Day1 ["2. Day-1 : Codage & Audit des Modules .tf"]
+        FinOps --> TFCode["Modification des modules\nnetworking / security-waf /\ncompute-gke / backup-dr"]
+        TFCode -->|Audit Sécurité| SecOps["🛡️ secops-auditor\n(.agents/agents/secops-auditor.md)\n• SaferGCP : Zéro IP publique\n• IAM scopé à la ressource\n• Cloud Armor exclusion upload PDF"]
+        TFCode -->|Audit Résilience| DR["🌪️ dr-chaos-architect\n(.agents/agents/dr-chaos-architect.md)\n• Coffres WORM (google-beta)\n• Sync addon Backup for GKE\n• deletion_protection"]
+    end
+
+    subgraph Gatekeeper ["3. Pre-Commit : Skill M1L1"]
+        SecOps & DR --> Skill["🛠️ terraform-blueprint-validation\n(scripts/verify.sh)\n• terraform fmt -check\n• terraform validate\n• Contrôle outputs & toggles"]
+    end
+
+    subgraph Day2 ["4. Day-2 : Handshake Runtime Multi-Agents"]
+        Skill -->|terraform apply| Output["⚡ Output : agentic_platform_config\n(Endpoints Vertex AI, Lakehouse BQ,\nBuckets GCS, Workload Identity)"]
+        Output -->|Alimente| AppRAG["🤖 Swarm 4 Agents CRAG\n(app-rag-comparison)"]
+        Output -->|Alimente| AppCivic["🏛️ Swarm 4 Agents ADK 2.0\n(civiclens)"]
+    end
+```
+
+### 📊 Matrice de Déclenchement des Agents & Skills
+
+| Agent / Skill | Couche | Où s'exécute-t-il ? | Quand entre-t-il en action ? (Déclencheur) | Ce qu'il vérifie / produit concrètement |
+| :--- | :--- | :--- | :--- | :--- |
+| **[`finops-advisor`](.agents/agents/finops-advisor.md)** | **Couche 1** *(Build-Time)* | IDE / CLI *(Jetski, Antigravity, Gemini CLI)* | Lors de la création ou modification de `terraform.tfvars` ou `modules/finops-budget/`. | Compare le coût mensuel du **Profil A** (Cloud Run *scale-to-zero* + Direct VPC Egress sans VM NAT fixe) vs **Profil B** (GKE Autopilot + WORM), vérifie les règles de cycle de vie GCS (`Nearline`/`Archive`) et les alertes budgétaires. |
+| **[`secops-auditor`](.agents/agents/secops-auditor.md)** | **Couche 1** *(Build-Time)* | IDE / CLI *(Jetski, Antigravity, Gemini CLI)* | Avant tout commit sur `modules/security-waf/`, `modules/networking/`, ou les rôles IAM. | Contrôle l'absence de `google_project_iam_member` trop permissif, vérifie `enable_private_nodes = true`, et garantit que Cloud Armor exclut `/api/documents/upload` de l'inspection OWASP L7 (évitant les faux positifs HTTP 403 sur les PDF). |
+| **[`dr-chaos-architect`](.agents/agents/dr-chaos-architect.md)** | **Couche 1** *(Build-Time)* | IDE / CLI *(Jetski, Antigravity, Gemini CLI)* | Lors de l'activation de `enable_backup_dr = true` ou de l'édition de `modules/compute-gke/`. | Vérifie l'utilisation du provider `google-beta` pour les `google_backup_dr_backup_vault`, la cohérence entre le plan de sauvegarde et l'addon `gke_backup_agent_config`, et le verrouillage `deletion_protection`. |
+| **[`terraform-blueprint-validation`](.agents/skills/terraform-blueprint-validation/SKILL.md)** | **Couche 1** *(Gatekeeper)* | Terminal local ou CI/CD (`scripts/verify.sh`) | Systématiquement avant chaque `git commit` ou ouverture de Pull Request. | Exécute les 4 portes de contrôle : `terraform fmt -check -recursive`, `terraform validate`, présence des variables `enable_*`, et présence de `agentic_platform_config`. |
+| **`agentic_platform_config`** | **Couche 2** *(Pont Runtime)* | Sortie Terraform (`outputs.tf`) | Après `terraform apply`, lors du déploiement de `app-rag-comparison` ou `civiclens`. | Injecte automatiquement les identifiants du Lakehouse BigQuery, des buckets GCS RAG et du pool Workload Identity dans les Swarms **CRAG** et **Google ADK 2.0**. |
+
+### 🎬 Playbook de Démo Live : 3 Scénarios Pas-à-Pas (IDE / Gemini CLI / Jetski)
+
+Lors d'une démonstration client ou d'un atelier d'architecture, copiez-collez directement ces 3 commandes ou prompts pour montrer comment les agents protègent le socle Terraform en temps réel :
+
+1. **Scénario 1 — Démontrer l'Audit SecOps & Cloud Armor (`secops-auditor`)** :
+   > 💬 *Prompt à copier dans Jetski / Antigravity / Gemini CLI :*
+   > `"Invoque le sous-agent secops-auditor pour auditer modules/security-waf/main.tf et vérifier pourquoi les uploads de fichiers PDF sur /api/documents/upload ne sont pas bloqués par la règle OWASP SQLi/XSS de Cloud Armor."`
+   - **Résultat démontré** : L'agent inspecte la règle de priorité Cloud Armor, explique l'exclusion ciblée `request.path.matches('/api/documents/upload')` (Pattern *Experience Before Theory*) et valide l'absence d'IP publique.
+
+2. **Scénario 2 — Démontrer l'Arbitrage FinOps Serverless vs Enterprise (`finops-advisor`)** :
+   > 💬 *Prompt à copier dans Jetski / Antigravity / Gemini CLI :*
+   > `"Invoque le sous-agent finops-advisor pour comparer le coût récurrent au repos entre le Profil A (Serverless Cloud Run avec Direct VPC Egress) et le Profil B (GKE Autopilot + Backup DR WORM) dans terraform.tfvars.example."`
+   - **Résultat démontré** : L'agent détaille pourquoi `Direct VPC Egress` économise le coût fixe d'un Serverless VPC Access Connector (`e2-micro` 24/7) et valide les seuils d'alerte Cloud Billing (`50% / 90% / 100%`).
+
+3. **Scénario 3 — Exécuter le Gatekeeper Automatisé M1L1 (`verify.sh`)** :
+   ```bash
+   ./.agents/skills/terraform-blueprint-validation/scripts/verify.sh
+   ```
+   - **Résultat démontré** : Exécution en moins de 5 secondes des 4 contrôles déterministes (`terraform fmt`, `terraform validate`, toggles `enable_*` et sortie `agentic_platform_config`).
 
 ---
 
 ## Licence
 
 Ce projet est distribué sous licence Apache 2.0. Consultez le fichier [LICENSE](LICENSE) pour plus d'informations.
+
+
 
