@@ -205,27 +205,51 @@ Once the foundation is provisioned, deploy compatible applications:
 
 ---
 
-## 🤖 Agentic Architecture & Embedded Skills (M1L1 Skills Framework)
+## 🤖 Agentic Architecture & Embedded Skills (`M1L1 Skills Framework`)
 
-This repository implements a **Dual-Layer AI-Native Engineering Architecture** aligned with the **Google Cloud M1L1 Skills Framework** (`AGENTS.md`, `.agents/agents/`, `.agents/skills/`):
+This repository implements a **Dual-Layer AI-Native Engineering Architecture** aligned with the **Google Cloud M1L1 Skills Framework** (*Tool Wrapper*, *Auth Recipe*, *Generator / Experience Before Theory*, *Reviewer Checklist*, and *Workflow*).
 
-### 1. Specialized Repository Subagents (`.agents/agents/`)
-Automatically discovered by **Jetski**, **Antigravity**, and **Gemini CLI**:
-- **[`secops-auditor`](.agents/agents/secops-auditor.md)**: Audits Cloud Armor OWASP Top 10 WAF policies (`preview` vs enforcement mode), IAM least-privilege bindings, and Cloud KMS CMEK encryption.
-- **[`finops-advisor`](.agents/agents/finops-advisor.md)**: Analyzes Direct VPC Egress costs (`0 EUR` idle), Cloud Run scale-to-zero (`min_instances = 0`), GKE Spot vs Autopilot profiles, and Cloud Billing budget thresholds (`50% / 90% / 100%`).
-- **[`dr-chaos-architect`](.agents/agents/dr-chaos-architect.md)**: Audits Backup for GKE policies, GCS soft-delete (`7d`), multi-zone high availability (`europe-west1`), and `deletion_protection` safeguards.
+### 🔄 Agent-Assisted IaC Lifecycle: Where and When Each Agent Enters into Action
 
-### 2. Procedural Skill (`terraform-blueprint-validation`)
-- **Path**: [`.agents/skills/terraform-blueprint-validation/SKILL.md`](.agents/skills/terraform-blueprint-validation/SKILL.md)
-- **Automated Gatekeeper Script**:
-  ```bash
-  ./.agents/skills/terraform-blueprint-validation/scripts/verify.sh
-  ```
-  Validates `terraform fmt -check -recursive`, `terraform validate`, `enable_*` toggle consistency, and `agentic_platform_config` outputs for downstream multi-agent swarms (`app-rag-comparison` and `app-civiclens`).
+Unlike a standard web application, a Terraform Landing Zone mobilizes its specialized agents throughout the **Infrastructure Engineering Lifecycle (Day-0 ➔ Day-1 ➔ Day-2)** before feeding its **`agentic_platform_config` output** into downstream production multi-agent swarms:
+
+```mermaid
+flowchart LR
+    subgraph Day0 ["1. Day-0: Sizing & FinOps"]
+        Dev(["Cloud Engineer / CE"]) -->|Selects tfvars profile| FinOps["🤖 finops-advisor\n(.agents/agents/finops-advisor.md)\n• Profile A (0€ idle) vs\n  Profile B (GKE + WORM)\n• Billing alerts 50/90/100%"]
+    end
+
+    subgraph Day1 ["2. Day-1: Coding & Auditing .tf Modules"]
+        FinOps --> TFCode["Edits Terraform modules\nnetworking / security-waf /\ncompute-gke / backup-dr"]
+        TFCode -->|Security Audit| SecOps["🛡️ secops-auditor\n(.agents/agents/secops-auditor.md)\n• SaferGCP: Zero public IPs\n• Resource-scoped IAM\n• Cloud Armor PDF upload exclusion"]
+        TFCode -->|Resilience Audit| DR["🌪️ dr-chaos-architect\n(.agents/agents/dr-chaos-architect.md)\n• WORM Vaults (google-beta)\n• Backup for GKE addon sync\n• deletion_protection"]
+    end
+
+    subgraph Gatekeeper ["3. Pre-Commit: M1L1 Skill"]
+        SecOps & DR --> Skill["🛠️ terraform-blueprint-validation\n(scripts/verify.sh)\n• terraform fmt -check\n• terraform validate\n• Output & toggle verification"]
+    end
+
+    subgraph Day2 ["4. Day-2: Runtime Multi-Agent Handshake"]
+        Skill -->|terraform apply| Output["⚡ Output: agentic_platform_config\n(Vertex AI endpoints, BQ Lakehouse,\nGCS Buckets, Workload Identity)"]
+        Output -->|Feeds| AppRAG["🤖 4-Agent CRAG Swarm\n(app-rag-comparison)"]
+        Output -->|Feeds| AppCivic["🏛️ 4-Agent ADK 2.0 Swarm\n(civiclens)"]
+    end
+```
+
+### 📊 Agent & Skill Trigger Matrix
+
+| Agent / Skill | Layer | Where does it run? | When does it enter into action? (Trigger) | What it verifies / produces |
+| :--- | :--- | :--- | :--- | :--- |
+| **[`finops-advisor`](.agents/agents/finops-advisor.md)** | **Layer 1** *(Build-Time)* | IDE / CLI *(Jetski, Antigravity, Gemini CLI)* | When creating or modifying `terraform.tfvars` or `modules/finops-budget/`. | Compares monthly spend between **Profile A** (Cloud Run *scale-to-zero* + Direct VPC Egress with zero fixed NAT VM cost) vs **Profile B** (GKE Autopilot + WORM), checks GCS lifecycle rules (`Nearline`/`Archive`), and validates budget alerts. |
+| **[`secops-auditor`](.agents/agents/secops-auditor.md)** | **Layer 1** *(Build-Time)* | IDE / CLI *(Jetski, Antigravity, Gemini CLI)* | Before committing changes to `modules/security-waf/`, `modules/networking/`, or IAM bindings. | Audits resource-scoped IAM bindings, verifies `enable_private_nodes = true`, and ensures Cloud Armor excludes `/api/documents/upload` from OWASP L7 body inspection (preventing HTTP 403 false positives on PDF uploads). |
+| **[`dr-chaos-architect`](.agents/agents/dr-chaos-architect.md)** | **Layer 1** *(Build-Time)* | IDE / CLI *(Jetski, Antigravity, Gemini CLI)* | When enabling `enable_backup_dr = true` or modifying `modules/compute-gke/`. | Verifies `google-beta` provider usage on `google_backup_dr_backup_vault`, checks synchronization between the GKE backup plan and `gke_backup_agent_config`, and enforces `deletion_protection`. |
+| **[`terraform-blueprint-validation`](.agents/skills/terraform-blueprint-validation/SKILL.md)** | **Layer 1** *(Gatekeeper)* | Local terminal or CI/CD (`scripts/verify.sh`) | Before every `git commit` or Pull Request. | Executes the 4-stage verification gate: `terraform fmt -check -recursive`, `terraform validate`, `enable_*` toggle presence, and `agentic_platform_config` output checks. |
+| **`agentic_platform_config`** | **Layer 2** *(Runtime Bridge)* | Terraform Root Output (`outputs.tf`) | After `terraform apply`, during `app-rag-comparison` or `civiclens` deployment. | Automatically injects BigQuery Lakehouse dataset IDs, GCS RAG buckets, and Workload Identity bindings into downstream **CRAG** and **Google ADK 2.0** multi-agent swarms. |
 
 ---
 
 ## License
 
 This project is licensed under the Apache License 2.0. See [LICENSE](LICENSE) for details.
+
 
