@@ -20,11 +20,11 @@ Style @ArchitectureRoot {
 }
 Style @PerimeterZone {
   fill: "#e8f0fe", strokeColor: "#8ab4f8", strokeWidth: 1.5, borderRadius: 12,
-  padding: 16, gap: 16, fontColor: $DarkSlate, fontSize: 15, labelWeight: bold
+  padding: 20, gap: 18, fontColor: $DarkSlate, fontSize: 15, labelWeight: bold
 }
 Style @ExecutionZone {
   fill: "#fce8e6", strokeColor: "#f6aea9", strokeWidth: 1.5, borderRadius: 12,
-  padding: 16, gap: 16, fontColor: $DarkSlate, fontSize: 15, labelWeight: bold
+  padding: 20, gap: 18, fontColor: $DarkSlate, fontSize: 15, labelWeight: bold
 }
 Style @GovernanceZone {
   fill: "#e6f4ea", strokeColor: "#81c995", strokeWidth: 1.5, borderRadius: 12,
@@ -32,11 +32,11 @@ Style @GovernanceZone {
 }
 Style @ResourceZone {
   fill: "#fef7e0", strokeColor: "#fde293", strokeWidth: 1.5, borderRadius: 12,
-  padding: 16, gap: 16, fontColor: $DarkSlate, fontSize: 15, labelWeight: bold
+  padding: 20, gap: 18, fontColor: $DarkSlate, fontSize: 15, labelWeight: bold
 }
 Style @PeachSubGroup {
   fill: "#f8d3c8", strokeColor: darken("#f8d3c8", 12), strokeWidth: 1, borderRadius: 10,
-  padding: 12, gap: 10, fontColor: $DarkSlate, fontSize: 13, labelWeight: bold
+  padding: 16, gap: 12, fontColor: $DarkSlate, fontSize: 13, labelWeight: bold
 }
 Style @GreenSubGroup {
   fill: "#ceead6", strokeColor: darken("#ceead6", 14), strokeWidth: 1, borderRadius: 10,
@@ -44,13 +44,13 @@ Style @GreenSubGroup {
 }
 Style @AmberSubGroup {
   fill: "#f9e4a7", strokeColor: darken("#f9e4a7", 14), strokeWidth: 1, borderRadius: 10,
-  padding: 12, gap: 12, fontColor: $DarkSlate, fontSize: 13, labelWeight: bold
+  padding: 16, gap: 12, fontColor: $DarkSlate, fontSize: 13, labelWeight: bold
 }
 Style @ActorCard {
   width: 180, height: 56,
   fill: $SurfaceWhite, strokeColor: $CardBorder, strokeWidth: 1, borderRadius: 8,
   fontColor: $DarkSlate, subFontColor: $SubText,
-  fontSize: 14, subFontSize: 11, labelWeight: bold,
+  fontSize: 12.5, subFontSize: 10, labelWeight: bold,
   textAlign: "left", textVAlign: "middle",
   iconPosition: "left", iconSize: 28, padding: 10, shadow: true
 }
