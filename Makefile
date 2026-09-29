@@ -10,7 +10,7 @@ help: ## Affiche l'aide interactive des commandes de démo et de vérification
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-18s\033[0m %s\n", $$1, $$2}'
 
 verify: ## Exécute le Gatekeeper M1L1 (terraform fmt, validate & audit sécurité IAM/WORM)
-	@./.agents/skills/terraform-foundation-validator/scripts/verify.sh
+	@./.agents/skills/terraform-blueprint-validation/scripts/verify.sh
 
 fmt: ## Formate récursivement tous les modules Terraform (HCL canonique)
 	@terraform fmt -recursive
