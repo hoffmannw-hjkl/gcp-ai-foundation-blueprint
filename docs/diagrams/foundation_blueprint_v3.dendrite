@@ -1,0 +1,194 @@
+renderOrder: nodes-first
+direction: down
+
+const GcpBlue = "#1a73e8"
+const GcpGreen = "#1e8e3e"
+const EmeraldTeal = "#0d9488"
+const DarkSlate = "#202124"
+const SubText = "#5f6368"
+const CardBorder = "#dadce0"
+const BusStroke = "#334155"
+const SurfaceWhite = "#ffffff"
+
+Style @Ghost {
+  fill: transparent, strokeWidth: 0, fontColor: transparent, padding: 0
+}
+Style @ArchitectureRoot {
+  fill: "#f8fafd", strokeColor: "#c2d7f5", strokeWidth: 1.5, borderRadius: 16,
+  padding: 22, gap: 18, fontColor: "#3c4043", fontSize: 22, labelWeight: bold,
+  icon: "GoogleCloud", iconSize: 28
+}
+Style @PerimeterZone {
+  fill: "#e8f0fe", strokeColor: "#8ab4f8", strokeWidth: 1.5, borderRadius: 12,
+  padding: 16, gap: 16, fontColor: $DarkSlate, fontSize: 15, labelWeight: bold
+}
+Style @ExecutionZone {
+  fill: "#fce8e6", strokeColor: "#f6aea9", strokeWidth: 1.5, borderRadius: 12,
+  padding: 16, gap: 16, fontColor: $DarkSlate, fontSize: 15, labelWeight: bold
+}
+Style @GovernanceZone {
+  fill: "#e6f4ea", strokeColor: "#81c995", strokeWidth: 1.5, borderRadius: 12,
+  padding: 16, gap: 14, fontColor: $DarkSlate, fontSize: 15, labelWeight: bold
+}
+Style @ResourceZone {
+  fill: "#fef7e0", strokeColor: "#fde293", strokeWidth: 1.5, borderRadius: 12,
+  padding: 16, gap: 16, fontColor: $DarkSlate, fontSize: 15, labelWeight: bold
+}
+Style @PeachSubGroup {
+  fill: "#f8d3c8", strokeColor: darken("#f8d3c8", 12), strokeWidth: 1, borderRadius: 10,
+  padding: 12, gap: 10, fontColor: $DarkSlate, fontSize: 13, labelWeight: bold
+}
+Style @GreenSubGroup {
+  fill: "#ceead6", strokeColor: darken("#ceead6", 14), strokeWidth: 1, borderRadius: 10,
+  padding: 10, gap: 7, fontColor: $DarkSlate, fontSize: 13, labelWeight: bold
+}
+Style @AmberSubGroup {
+  fill: "#f9e4a7", strokeColor: darken("#f9e4a7", 14), strokeWidth: 1, borderRadius: 10,
+  padding: 12, gap: 12, fontColor: $DarkSlate, fontSize: 13, labelWeight: bold
+}
+Style @ActorCard {
+  width: 180, height: 56,
+  fill: $SurfaceWhite, strokeColor: $CardBorder, strokeWidth: 1, borderRadius: 8,
+  fontColor: $DarkSlate, subFontColor: $SubText,
+  fontSize: 14, subFontSize: 11, labelWeight: bold,
+  textAlign: "left", textVAlign: "middle",
+  iconPosition: "left", iconSize: 28, padding: 10, shadow: true
+}
+Style @ProductCard {
+  width: 168, height: 58,
+  fill: $SurfaceWhite, strokeColor: $CardBorder, strokeWidth: 1, borderRadius: 8,
+  fontColor: $DarkSlate, subFontColor: $SubText,
+  fontSize: 13.5, subFontSize: 11, labelWeight: bold,
+  textAlign: "left", textVAlign: "middle",
+  iconPosition: "left", iconSize: 28, padding: 10, shadow: true
+}
+Style @GatewayHubCard {
+  base: @ProductCard,
+  width: 196, height: 66, strokeColor: $GcpBlue, strokeWidth: 2,
+  fontSize: 14.5, subFontSize: 11, iconSize: 30, padding: 12
+}
+Style @PolicyPill {
+  width: 228, height: 32,
+  fill: $SurfaceWhite, strokeColor: "#9aa0a6", strokeWidth: 1, borderRadius: 16,
+  fontColor: $DarkSlate, fontSize: 12.5, labelWeight: bold,
+  textAlign: "left", textVAlign: "middle",
+  iconPosition: "left", iconSize: 16, padding: 10, shadow: true
+}
+
+Zone @GCP_AI_Foundation_Blueprint {
+  title: "GCP AI Foundation Blueprint — Enterprise Landing Zone (europe-west1)"
+  style: @ArchitectureRoot
+  layout: matrix
+  areas: [
+    "z1 z1 z1 z1 z1",
+    "z3 z3 z2 z2 z2",
+    "z4 z4 z4 z4 z4"
+  ]
+  sizes: ["1.05fr", "1.05fr", "0.96fr", "0.96fr", "0.96fr"]
+  gap: 20
+
+  Zone @Zone1_Perimeter {
+    area: "z1"
+    title: "1. Zero-Trust Edge Perimeter & Ingress (modules/security-waf & networking)"
+    style: @PerimeterZone
+    layout: row, gap: 18, align: center, justify: center
+    [enterprise_users: "Enterprise Users" | "HTTPS Clients"] { style: @ActorCard, icon: "Users" }
+    [cloud_armor_waf: "Cloud Armor WAF" | "OWASP Top 10 & DDoS"] { style: @ProductCard, width: 186, icon: "CloudArmor" }
+    [global_lb: "Global HTTPS LB" | "Anycast & Managed SSL"] { style: @ProductCard, width: 186, icon: "CloudLoadBalancing" }
+    [iap_proxy: "Identity-Aware Proxy" | "Zero-Trust OIDC Auth"] { style: @ProductCard, width: 188, icon: "GoogleIdentity" }
+    [iap_bastion: "IAP Admin Bastion" | "Shielded VM (No Public IP)"] { style: @ProductCard, width: 194, icon: "GcpCompute" }
+  }
+
+  Zone @Zone3_Compute {
+    area: "z3"
+    title: "2. Private Compute Runtimes (VPC Egress & Workload Identity)"
+    style: @ExecutionZone
+    layout: row, gap: 36, align: center, justify: center
+
+    [vpc_router_nat: "Private AI VPC\n& Cloud NAT" | "Direct VPC Egress / PSA"] {
+      style: @GatewayHubCard, icon: "VirtualPrivateCloud",
+      description: "Custom VPC with Private Google Access, Private Service Connect, and Cloud NAT"
+    }
+
+    Zone @ComputeProfilesCol {
+      style: @Ghost, layout: column, gap: 14, align: stretch
+
+      Zone @ServerlessProfile {
+        title: "Profile A: Serverless Compute (enable_cloudrun)"
+        style: @PeachSubGroup, width: 344, layout: row, gap: 10, align: center, justify: center
+        [cloud_run_v2: "Cloud Run v2" | "Direct VPC Egress"] { style: @ProductCard, width: 154, icon: "GcpCloudRun" }
+        [artifact_reg: "Artifact Registry" | "Container Images"] { style: @ProductCard, width: 154, icon: "ArtifactRegistry" }
+      }
+
+      Zone @KubernetesProfile {
+        title: "Profile B: Enterprise K8s (enable_gke)"
+        style: @PeachSubGroup, dashed: true, width: 344, layout: row, gap: 10, align: center, justify: center
+        [gke_autopilot: "GKE Autopilot" | "Private Nodes + WI"] { style: @ProductCard, width: 154, icon: "GKE" }
+        [workload_id: "Workload Identity" | "Keyless OIDC IAM"] { style: @ProductCard, width: 154, icon: "GcpLock" }
+      }
+    }
+  }
+
+  Zone @Zone2_Governance {
+    area: "z2"
+    title: "3. Security, FinOps, Observability & Agentic Gatekeeper"
+    style: @GovernanceZone
+    layout: row, gap: 24, align: center, justify: center
+
+    Zone @SreAndFinopsCol {
+      style: @Ghost, layout: column, gap: 12, align: center
+      [cloud_monitoring: "Cloud Monitoring" | "SLOs & Latency Alerts"] { style: @ProductCard, width: 182, icon: "CloudMonitoring" }
+      [cloud_logging: "Cloud Logging" | "Audit Sink to BigQuery"] { style: @ProductCard, width: 182, icon: "CloudLogging" }
+      [finops_budget: "Cloud Billing FinOps" | "Alerts 50% / 90% / 100%"] { style: @ProductCard, width: 182, icon: "CloudBilling" }
+    }
+
+    Zone @SovereignGuardrails {
+      title: "Sovereign Controls & M1L1 Gatekeeper"
+      style: @GreenSubGroup, layout: column, gap: 8, align: center
+      [guard_iam: "Resource-Scoped IAM Only"] { style: @PolicyPill, icon: "ShieldCheck" }
+      [guard_cmek: "Cloud KMS CMEK (90d Rotation)"] { style: @PolicyPill, icon: "KMS" }
+      [guard_worm: "WORM Backup Lock (enforce=true)"] { style: @PolicyPill, icon: "Lock" }
+      [guard_m1l1: "M1L1 verify.sh & Subagents"] { style: @PolicyPill, icon: "Bot" }
+    }
+  }
+
+  Zone @Zone4_DataAI {
+    area: "z4"
+    title: "4. Data Lakehouse, Vertex AI & Immutable Resilience (modules/data-ai-foundation & backup-dr)"
+    style: @ResourceZone
+    layout: matrix, cols: 3, sizes: ["1.05fr", "1.15fr", "0.95fr"], gap: 18, align: center
+
+    Zone @StorageAndLakehouse {
+      title: "Encrypted Data & Corpus Storage"
+      style: @AmberSubGroup, layout: row, gap: 12, align: center, justify: center
+      [gcs_rag_bucket: "Cloud Storage" | "UBLA + Versioning"] { style: @ProductCard, width: 168, icon: "GcpStorageBucket" }
+      [bigquery_lake: "BigQuery Lakehouse" | "Partitioned Analytics"] { style: @ProductCard, width: 174, icon: "BigQuery" }
+    }
+
+    Zone @VertexAiPlatform {
+      title: "Managed GenAI & Embeddings (europe-west1)"
+      style: @AmberSubGroup, layout: row, gap: 12, align: center, justify: center
+      [vertex_gemini: "Vertex AI Gemini" | "Gemini 3.5 Flash / Pro"] { style: @ProductCard, width: 176, icon: "VertexAI" }
+      [vertex_embed: "Vertex Embeddings" | "text-embedding-004 (768d)"] { style: @ProductCard, width: 184, icon: "AIPlatform" }
+    }
+
+    Zone @ResilienceAndKms {
+      title: "Crypto & Disaster Recovery"
+      style: @AmberSubGroup, layout: row, gap: 12, align: center, justify: center
+      [cloud_kms: "Cloud KMS CMEK" | "90-Day Key Rotation"] { style: @ProductCard, width: 168, icon: "KMS" }
+      [backup_dr_worm: "Backup & DR Vault" | "Immutable WORM Lock"] { style: @ProductCard, width: 174, icon: "SecurityCommandCenter" }
+    }
+  }
+}
+
+[enterprise_users] --> [cloud_armor_waf] { color: $GcpBlue, strokeWidth: 2, sourceAnchor: "right", targetAnchor: "left", curve: "step", sequenceBadge: "1", badgeFill: $GcpBlue, badgeFontColor: $SurfaceWhite }
+[cloud_armor_waf] --> [global_lb] { color: $GcpBlue, strokeWidth: 2, sourceAnchor: "right", targetAnchor: "left", curve: "step" }
+[global_lb] --> [iap_proxy] { color: $GcpBlue, strokeWidth: 2, sourceAnchor: "right", targetAnchor: "left", curve: "step" }
+[Zone1_Perimeter] --> [vpc_router_nat] { color: $GcpBlue, strokeWidth: 2, sourceAnchor: "bottom", targetAnchor: "top", curve: "step", label: "Zero-Trust", sequenceBadge: "2", badgeFill: $GcpBlue, badgeFontColor: $SurfaceWhite }
+[vpc_router_nat] --> [ServerlessProfile] { color: $GcpBlue, strokeWidth: 2, sourceAnchor: "right", targetAnchor: "left", curve: "step" }
+[vpc_router_nat] --> [KubernetesProfile] { color: $GcpBlue, strokeWidth: 2, sourceAnchor: "right", targetAnchor: "left", curve: "step" }
+[ComputeProfilesCol] --> [SreAndFinopsCol] { color: $BusStroke, strokeWidth: 1.8, dashed: true, sourceAnchor: "right", targetAnchor: "left", curve: "step", label: "Telemetry" }
+[SreAndFinopsCol] --> [SovereignGuardrails] { color: $GcpGreen, strokeWidth: 1.8, sourceAnchor: "right", targetAnchor: "left", curve: "step" }
+[Zone3_Compute] --> [StorageAndLakehouse] { color: $EmeraldTeal, strokeWidth: 2, sourceAnchor: "bottom", targetAnchor: "top", curve: "step", label: "Storage API", sequenceBadge: "3", badgeFill: $EmeraldTeal, badgeFontColor: $SurfaceWhite }
+[Zone3_Compute] --> [VertexAiPlatform] { color: $GcpBlue, strokeWidth: 2, sourceAnchor: "bottom", targetAnchor: "top", curve: "step", label: "Vertex ADC", sequenceBadge: "4", badgeFill: $GcpBlue, badgeFontColor: $SurfaceWhite }
+[Zone2_Governance] --> [ResilienceAndKms] { color: $GcpGreen, strokeWidth: 1.8, dashed: true, sourceAnchor: "bottom", targetAnchor: "top", curve: "step", label: "CMEK & WORM" }
