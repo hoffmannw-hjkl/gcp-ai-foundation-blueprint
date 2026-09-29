@@ -13,6 +13,8 @@ Every stage specifies:
 
 ---
 
+[![GCP AI Foundation Blueprint — Enterprise Landing Zone (europe-west1)](diagrams/foundation_blueprint_v3.png)](diagrams/foundation_blueprint_v3.png)
+
 ## ⏱️ Demo Flow Overview (Duration: 10–15 min)
 
 ```mermaid

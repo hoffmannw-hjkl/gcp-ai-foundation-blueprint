@@ -13,6 +13,8 @@ Chaque étape précise :
 
 ---
 
+[![GCP AI Foundation Blueprint — Enterprise Landing Zone (europe-west1)](diagrams/foundation_blueprint_v3.png)](diagrams/foundation_blueprint_v3.png)
+
 ## ⏱️ Vue d'Ensemble du Scénario (Durée : 10 à 15 min)
 
 ```mermaid

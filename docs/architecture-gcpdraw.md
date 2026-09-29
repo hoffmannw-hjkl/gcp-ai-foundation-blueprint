@@ -16,6 +16,12 @@ Ce document centralise les **schémas d'architecture as-code** de **GCP AI Found
 
 ---
 
+## 🖼️ Aperçu Visuel (Dendrite v3.3 — Bento Matrix 16:9)
+
+[![GCP AI Foundation Blueprint — Enterprise Landing Zone (europe-west1)](diagrams/foundation_blueprint_v3.png)](diagrams/foundation_blueprint_v3.png)
+
+---
+
 ## 1. Spécification Dendrite v3.3 (`docs/diagrams/foundation_blueprint_v3.dendrite`)
 
 > **Sous-titre exécutif** : *9 Modules Terraform Production-Ready, Cloud Armor WAF, Direct VPC Egress, GKE Autopilot, Vertex AI, KMS CMEK & Backup DR*
